@@ -204,6 +204,8 @@ pnpm run dev:desktop
 pnpm run start:desktop
 ```
 
+在 Linux 上，两个命令还会在启动前准备兼容 Electron 的 sharp 树，位置为 `apps/desktop/.desktop-build/development/sharp-electron`。工作区的 sharp 预编译绑定会使 Linux 上 Node 模式的 Electron 二进制崩溃，因此开发 Host 将 sharp 解析重定向到这棵以系统 libvips 链接的源码构建树；当缺少带头文件的 libvips（8.18.7 或更新版本）或 C++ 工具链时，启动会失败并给出安装指引。该树会缓存到 sharp 固定版本、Electron Node 版本或平台变化为止；删除它可强制重建。图像处理期间关于 `vips-openslide.so` 的 `VIPS-WARNING` 是发行版可选 libvips 模块带来的无害噪音。[Electron 下的 sharp 决策](../../.agents/notes/implemented/architecture/2026-10-25-linux-desktop-sharp-electron.zh.md)记录了完整诊断。
+
 桌面包准备过程按安装包目标的操作系统和架构筛选可选原生包。Windows 的包集合不包含 macOS Computer Use tarball，即使输入包是在 macOS 上打包的。
 
 Web 侧的对应命令是 `pnpm run dev:web` 与 `pnpm run start:web`，见[开发指南](../../docs/development.zh.md)。Workspace 开发使用 Electron RunAsNode 运行当前 CLI 与私有 Desktop Host 包，插件管理和恢复使用 `$DSH_HOME/profiles/desktop`，与一次性工作区运行时分离。Host 在开发与打包构建中都使用 runtime 模块解析，不创建官方包的 fallback 链接；开发者安装的包（包括链接）保留原生优先级。需要验证 Electron RunAsNode、内置 pnpm、内置 dsh 资源、插件安装和修复时，应运行未封装安装器的应用目录。

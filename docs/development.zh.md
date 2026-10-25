@@ -14,6 +14,7 @@
 - 启用 Node.js TypeScript 类型剥离。仓库构建脚本用 tsdown 的 native 配置加载器加载 `tsdown.config.ts`，因此当 `NODE_OPTIONS` 含 `--no-experimental-strip-types` 或 Node.js 构建缺少 TypeScript 支持时会失败；`pnpm run build` 会先检查这一条件并指出原因。
 - 启用了 Corepack 的 pnpm。仓库在 `package.json` 中固定使用 `pnpm@11.28.5`；如果 `pnpm --version` 无法通过 Corepack 解析，请先运行 `corepack enable`。
 - Git 2.26 或更高版本；钩子设置会启用 Git 的 worktree 专属配置扩展。
+- 仅 Linux 桌面开发需要：带头文件的 libvips（8.18.7 或更新版本）与 C++ 工具链，因为 `dev:desktop` 会基于系统 libvips 从源码构建 sharp——预编译绑定在 Electron 的 Linux 运行时中会崩溃（详见 [Desktop README](../apps/desktop/README.zh.md#develop)）。
 - 可选：一个 DeepSeek API key，用于 Web、headless 和 ACP（Agent Client Protocol）自动化 agent（智能体）演示以及真实 API 的 e2e 测试。
 
 ### Windows 与 WSL 2
