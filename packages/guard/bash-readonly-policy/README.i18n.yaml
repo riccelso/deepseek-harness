@@ -1,0 +1,43 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/guard/bash-readonly-policy/README.md
+/:
+  en: b08d368efb2fc79d
+  zh: a10523c9bc20f844
+/deepseek-ai-dsh-bash-readonly-policy:
+  en: 0c5c264a83e3bdeb
+  zh: c50064a16dfb89f5
+/deepseek-ai-dsh-bash-readonly-policy/summary:
+  en: 94b843a6cd1bb61c
+  zh: 9a73bf58eba2ede2
+/deepseek-ai-dsh-bash-readonly-policy/table-of-contents:
+  en: cbfb676bb9a7a2de
+  zh: 32933750a004d72c
+/deepseek-ai-dsh-bash-readonly-policy/use-this-package:
+  en: a122ba91e978d21d
+  zh: 894e2acef59b33e4
+/deepseek-ai-dsh-bash-readonly-policy/understand-the-implementation:
+  en: 5a34a90c85dd8517
+  zh: 678b07d9aeea0663
+/deepseek-ai-dsh-bash-readonly-policy/dev-note:
+  en: 95914c46d34a78b4
+  zh: 40c892711f48ea2d
+/deepseek-ai-dsh-bash-readonly-policy/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-bash-readonly-policy/model-experience/approval-friction-only:
+  en: b03f2539dfe6edc8
+  zh: ef36cc6337791e31
+/deepseek-ai-dsh-bash-readonly-policy/model-experience/approval-friction-only/what-the-model-sees:
+  en: fbc1e69cd5ae1f3a
+  zh: 84abaeed98714834
+/deepseek-ai-dsh-bash-readonly-policy/model-experience/approval-friction-only/token-effect:
+  en: 84cfed48ff672eea
+  zh: 79abf44ceea67f74
+/deepseek-ai-dsh-bash-readonly-policy/model-experience/approval-friction-only/kv-cache-effect:
+  en: 28c66bebec214cf4
+  zh: afe10a43350fd8d3
+/deepseek-ai-dsh-bash-readonly-policy/known-limitations-and-deferred-work:
+  en: 4bca0f005cbd6234
+  zh: 063cd218e1bb6a74
