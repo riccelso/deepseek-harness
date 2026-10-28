@@ -24,6 +24,7 @@ import { createChatStore } from '../src/client/stores.ts'
 import { CHAT_SETTINGS_NAMESPACE, type ChatSettings } from '../src/chat-settings.ts'
 import type { LinkOpeningRowInjected } from '../src/client/settings/LinkOpeningRow.tsx'
 import type { TranscriptViewRowInjected } from '../src/client/settings/TranscriptViewRow.tsx'
+import type { ToolGroupingRowInjected } from '../src/client/settings/ToolGroupingRow.tsx'
 
 usePinnedBrowserLanguages('zh-CN')
 
@@ -52,6 +53,13 @@ function sessionFakeFor() {
   } satisfies SessionBehaviorOverrides
 }
 
+/** Typed view of the shortcut commands ui-chat registers, read back through the bench stub. */
+interface ShortcutEntryStub {
+  readonly id: string
+  label(): string
+  resolve(context: unknown): { status: string; run?(): void }
+}
+
 async function bench(initialSettings?: ChatSettings, withBrowserRegistry = true, withProcessGroups = true) {
   const runtime = await SlotTestRuntime.create()
   const chatSettings = stubConfigForm<ChatSettings>()
@@ -64,6 +72,8 @@ async function bench(initialSettings?: ChatSettings, withBrowserRegistry = true,
   runtime.ctx.provide('connection', { state: createSnapshotStore('connected') } as never)
   runtime.ctx.provide('fileDrag', { actions: fileDrag, read: () => undefined })
   runtime.ctx.provide('layout', layout as never)
+  const shortcutsRegister = vi.fn((_entry: ShortcutEntryStub) => () => {})
+  runtime.ctx.provide('shortcuts', { register: shortcutsRegister } as never)
   const sidebarRight = {
     openResource: vi.fn<(address: string) => void>(),
     openTab: vi.fn<(kind: string, options?: unknown) => void>(),
@@ -133,7 +143,7 @@ async function bench(initialSettings?: ChatSettings, withBrowserRegistry = true,
       const preference: object = row.inject!()
       return preference as LinkOpeningRowInjected
     },
-    runtime, chat, chatSettings, browserAvailable,
+    runtime, chat, chatSettings, browserAvailable, shortcutsRegister,
     layout, openWorkspacePath, sidebarRight, sidebarRightTabs, session, chatViewApi, chatFlowApi, rootReference, openSession,
   }
 }
@@ -534,6 +544,36 @@ describe('Chat inject API', () => {
     expect(b.session.readAttachment).toHaveBeenCalledWith(ATTACHMENT.attachmentId)
     expect(injected.loadImage.peek?.(ATTACHMENT)).toBe(loaded)
     await b.runtime.dispose()
+  })
+
+  it('toggles every aggregate tool row through one shortcut command', async () => {
+    const b = await bench()
+    try {
+      const entry = b.shortcutsRegister.mock.calls.at(-1)![0]
+      expect(entry.id).toBe('chat.toolGroups.toggleAll')
+      expect(typeof entry.label()).toBe('string')
+      const injected = b.chatFlowApi(b.rootReference).injected
+      const expansion = injected.hooks.toolGroupExpansion
+      expect(expansion.getSnapshot()).toEqual({ all: false, generation: 0 })
+      const resolution = entry.resolve(null)
+      expect(resolution.status).toBe('handled')
+      resolution.run?.()
+      expect(expansion.getSnapshot()).toEqual({ all: true, generation: 1 })
+      resolution.run?.()
+      expect(expansion.getSnapshot()).toEqual({ all: false, generation: 2 })
+      expect(injected.summaryFor('edit')).toBeUndefined()
+      const row = b.runtime.slots.entries('settings.general.item').find(candidate => candidate.options.id === 'tool-grouping')!
+      const preference: object = row.inject!()
+      const toolGroupingPreference = preference as ToolGroupingRowInjected
+      expect(toolGroupingPreference.hooks.toolGrouping.getSnapshot()).toEqual({ enabled: true, threshold: 3 })
+      toolGroupingPreference.setToolGroupThreshold(5)
+      toolGroupingPreference.setToolGrouping('off')
+      expect(toolGroupingPreference.hooks.toolGrouping.getSnapshot()).toEqual({ enabled: false, threshold: 5 })
+      expect(b.chatSettings.set).toHaveBeenCalledWith('toolGroupThreshold', 5)
+      expect(b.chatSettings.set).toHaveBeenCalledWith('toolGrouping', 'off')
+    } finally {
+      await b.runtime.dispose()
+    }
   })
 })
 

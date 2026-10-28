@@ -28,6 +28,10 @@ export type { Config as ConversationConfig } from './apply.ts'
 export { UiConversation } from './conversation/assembly.ts'
 export type { ConversationBinding } from './conversation/assembly.ts'
 export type { ConversationGroupRegistry } from './conversation/group-registry.ts'
+export type { ToolGroupSummaryRegistry } from './conversation/tool-group-registry.ts'
+export type {
+  ToolGroupItemStatus, ToolGroupItemSummary, ToolGroupSummaryRegistration, ToolGroupSummarySpec,
+} from './contract/tool-groups.ts'
 export type {
   ConversationGroupContext, ConversationGroupData, ConversationGroupDataMap,
   ConversationGroupDefinition, ConversationGroupedView, ConversationGroupInput,

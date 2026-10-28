@@ -70,6 +70,27 @@ export type LinkOpening = 'sidebar' | 'new-tab'
 /** Preserve the built-in browser for users without an explicit preference. */
 export const DEFAULT_LINK_OPENING: LinkOpening = 'sidebar'
 
+/** Whether consecutive same-Tool calls collapse into one aggregate row. */
+export type ToolGrouping = 'on' | 'off'
+
+/** Field carrying the aggregate-row enabled choice. */
+export const TOOL_GROUPING_FIELD = 'toolGrouping'
+
+/** Group consecutive same-Tool calls by default. */
+export const DEFAULT_TOOL_GROUPING: ToolGrouping = 'on'
+
+/** Threshold choices offered for the aggregate-row minimum call count. */
+export const TOOL_GROUP_THRESHOLDS = [2, 3, 5, 10] as const
+
+/** Field carrying the aggregate-row threshold. */
+export const TOOL_GROUP_THRESHOLD_FIELD = 'toolGroupThreshold'
+
+/** Minimum consecutive calls before one aggregate row replaces individual rows. */
+export type ToolGroupThreshold = typeof TOOL_GROUP_THRESHOLDS[number]
+
+/** Aggregate three calls by default; two adjacent calls stay individual. */
+export const DEFAULT_TOOL_GROUP_THRESHOLD: ToolGroupThreshold = 3
+
 /** Durable Chat section shared by the Host schema and browser scope. */
 export interface ChatSettings {
   /** Work-details preference; absence uses the client default, and legacy saved values remain accepted. */
@@ -82,6 +103,10 @@ export interface ChatSettings {
   performanceUsage: PerformanceUsageMode
   /** Default destination for Chat HTTP(S) links. */
   linkOpening: LinkOpening
+  /** Whether consecutive same-Tool calls collapse into one aggregate row; absence groups them. */
+  toolGrouping?: ToolGrouping
+  /** Minimum consecutive same-Tool calls that collapse into one aggregate row. */
+  toolGroupThreshold?: ToolGroupThreshold
 }
 
 /** Durable Chat schema; also the wire envelope the browser scope validates against. */
@@ -92,6 +117,8 @@ export const ChatSettingsFields = {
   performanceUsage: z.union([...PERFORMANCE_USAGE_MODES]).default(DEFAULT_PERFORMANCE_USAGE),
   // Missing and unrecognized modes defer to the client's default.
   [TRANSCRIPT_VIEW_FIELD]: z.union([...TRANSCRIPT_VIEW_SETTING_VALUES]).loose(),
+  toolGrouping: z.union(['on', 'off']).default(DEFAULT_TOOL_GROUPING),
+  toolGroupThreshold: z.union([...TOOL_GROUP_THRESHOLDS]).default(DEFAULT_TOOL_GROUP_THRESHOLD),
 }
 
 /** Schema for shared configuration values. */

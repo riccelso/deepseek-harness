@@ -119,6 +119,8 @@ Chat Builder 按节点发布 `bottomSource`：节点可见且属于已加载的�
 
 滚动边缘渐隐在 `ResizeObserver` 报告已展开组的布局后初始化；展开组时不会在 layout effect 中立即读取滚动尺寸。
 
+在一个分组主体内，连续同名工具调用若其工具名注册了 `ctx.uiConversation.toolGroups` 提供方，达到阈值（默认三次，可在设置中选择二至十次）后折叠为一行聚合行。聚合行显示提供方的本地化数量标题和每次调用一行摘要——编辑与写入为路径加 `+新增 −删除` 行数统计，Shell 为命令及退出结论，读取为路径与结果行数——展开后按原始顺序恢复普通成员行，成员的全部操作保持不变。失败调用在其摘要行保留徽标，点击即展开并滚动到对应成员行。分段是对成员顺序的纯投影：不改动成员、重载后由相同节点确定性重导出，关闭偏好后恢复一调用一行的渲染。可选的 `shortcuts` 服务存在时承载 `chat.toolGroups.toggleAll`（默认 `primary+alt+G`），一次翻转当前会话的全部聚合行。
+
 每个组拥有本地 `useDisclosure` 状态，组件保持挂载时，模式切换保留该状态。
 
 Session 作用域的 `conversation.chat.reasoning.body` single Slot 仅在思考正文展开时提供原始思考文本和流式状态。官方条目以优先级 100 注册，并调用 `conversation.chat.reasoning.content` Factory。替换项使用更小的优先级数值，可向同一个 Factory 传入原文或派生显示文本。root 作用域的 Factory 不要求 Session，并固定使用紧凑排版。其可选 `labels` 原样接受完整的 `MarkdownLabels`，省略时使用 Chat 的默认本地化文案。宿主不提供内联 fallback 或插件操作状态。显示扩展必须保留查看原文的能力，并在自己的 Body 包装内维护控件。扩展不替换思考预览或展开策略。哪些块生成思考行由[思考展示规则](src/client/conversation-nodes/README.zh.md#display-modes)定义。

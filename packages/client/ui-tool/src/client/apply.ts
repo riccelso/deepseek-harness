@@ -17,6 +17,7 @@ import { searchToolview } from './tool/toolviews/search-row.tsx'
 import { detailsToolview } from './tool/toolviews/details-row.tsx'
 import { todoToolview } from './tool/toolviews/todo-row.tsx'
 import { webToolview } from './tool/toolviews/web-row.tsx'
+import { toolGroupSummaries } from './tool/tool-group-summaries.ts'
 
 /** Required services: the slot registry and the Remote face carrying the Host home used for POSIX `~`. */
 export const inject = ['slots', 'remote']
@@ -50,4 +51,5 @@ export function apply(ctx: ClientContext): void {
   ctx.plugin(todoToolview)
   ctx.plugin(detailsToolview)
   ctx.plugin(askQuestionToolview)
+  ctx.plugin(toolGroupSummaries)
 }

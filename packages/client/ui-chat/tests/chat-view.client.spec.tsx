@@ -36,6 +36,8 @@ import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts
 import { PartialArguments } from '@deepseek-ai/dsh-util-values'
 import { createChatStore } from '../src/client/stores.ts'
 import { derivePresentationPolicy, type CollapseTiming, type FoldedReplies } from '../src/client/presentation-policy.ts'
+import type { ToolGroupingPreferences } from '../src/client/tool-grouping.ts'
+import type { ToolGroupExpansionState } from '../src/client/contract/slots.ts'
 import { CHAT_FLOW_INJECT, CHAT_NODE_INJECT } from '../src/client/apply.ts'
 import { ChatView } from '../src/client/chat/ChatView.tsx'
 import { ChatFlow } from '../src/client/chat/ChatFlow.tsx'
@@ -281,19 +283,25 @@ const renderCommandSlot: React.ComponentProps<typeof CommandNodeView>['renderSlo
   (_key, _owner, opts) => opts?.fallback ?? null
 const renderTurnTailSlot: React.ComponentProps<typeof TurnTailNodeView>['renderSlot'] = () => null
 
-function HarnessChatFlow({ standard, owner, hookContext, renderSlot, useConnectionState }: {
+function HarnessChatFlow({ standard, owner, hookContext, renderSlot, useConnectionState,
+  useToolGrouping, useToolGroupExpansion, summaryFor,
+}: {
   readonly standard: HarnessStandardProps
   readonly owner: ChatFlowOwnerProps
   readonly hookContext: ChatFlowHookContext
   readonly renderSlot: ChatFlowSlotProps['renderSlot']
   readonly useConnectionState: ChatFlowSlotProps['useConnectionState']
+  readonly useToolGrouping: ChatFlowSlotProps['useToolGrouping']
+  readonly useToolGroupExpansion: ChatFlowSlotProps['useToolGroupExpansion']
+  readonly summaryFor: ChatFlowSlotProps['summaryFor']
 }) {
   const hooks = useMemo(() => ({
     useGroupAction: CHAT_FLOW_INJECT.hooks.groupAction(standard, hookContext),
     useGroupHeaderAction: CHAT_FLOW_INJECT.hooks.groupHeaderAction(standard, hookContext),
   }), [standard, hookContext])
   const { renderSlot: _rootRenderSlot, __renders: _rootRenders, ...shared } = standard
-  return <ChatFlow {...shared} {...owner} {...hooks} renderSlot={renderSlot} useConnectionState={useConnectionState} />
+  return <ChatFlow {...shared} {...owner} {...hooks} renderSlot={renderSlot} useConnectionState={useConnectionState}
+    useToolGrouping={useToolGrouping} useToolGroupExpansion={useToolGroupExpansion} summaryFor={summaryFor} />
 }
 
 function HarnessChatNode({ standard, owner, hookContext, usePerformanceUsage, toolOwners, fallback, renderAssistantSlot }: {
@@ -460,12 +468,19 @@ function makeHarness(
       throw new Error('Flow owner data must not replace its rendering or store authority')
     }
     return <HarnessChatFlow standard={props} owner={owner} hookContext={opts.hookContext} renderSlot={renderFlowSlot}
-      useConnectionState={useConnectionState} />
+      useConnectionState={useConnectionState}
+      useToolGrouping={useToolGrouping} useToolGroupExpansion={useToolGroupExpansion} summaryFor={summaryFor} />
   }
   // SessionProvider seat arrives with the session-scope child declaration;
   // ChatView never invokes it (pass-through stub).
   const connection = createSnapshotStore<ConnectionState | undefined>('connected')
   const useConnectionState = bindSnapshotSelector(connection)
+  // Aggregate rows stay off in this fixture: its assertions count ordinary rows.
+  const toolGrouping = createSnapshotStore<ToolGroupingPreferences>({ enabled: false, threshold: 3 })
+  const useToolGrouping = bindSnapshotSelector(toolGrouping)
+  const useToolGroupExpansion = bindSnapshotSelector(
+    createSnapshotStore<ToolGroupExpansionState>({ all: false, generation: 0 }))
+  const summaryFor: ChatFlowSlotProps['summaryFor'] = () => undefined
   const SessionProviderStub: ChatViewSlotProps['SessionProvider'] = ({ children }) => <>{children}</>
   const props: HarnessStandardProps = {
     fileDrag,

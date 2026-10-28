@@ -147,6 +147,22 @@ export async function expandTurnProcesses(page: Page): Promise<void> {
 }
 
 /**
+ * Expand every collapsed aggregate Tool-run row so a Tool-focused scenario can
+ * exercise the original row contract beneath the product-default aggregate
+ * presentation of consecutive same-Tool calls. Visiting the matches from the
+ * last inward keeps each index valid: opening one row removes it from the
+ * `aria-expanded="false"` set and would shift later indexes downward.
+ * @param page - page containing the Chat view.
+ */
+export async function expandToolGroups(page: Page): Promise<void> {
+  const controls = page.locator('[data-tool-group] > button[aria-expanded="false"]')
+  for (let index = await controls.count() - 1; index >= 0; index--) {
+    const control = controls.nth(index)
+    if (await control.isVisible()) await control.click()
+  }
+}
+
+/**
  * Expand the settled Turn process and secondary group containing a hidden descendant.
  * @param page - page containing the Chat view.
  * @param target - descendant whose outer process disclosures should open.

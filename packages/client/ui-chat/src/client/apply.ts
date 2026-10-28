@@ -23,9 +23,10 @@ import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client'
+import type { ShortcutCommandId } from '@deepseek-ai/dsh-client-shortcuts/client'
 import type {
   ChatFlowDataInjected, ChatFlowInjected, ChatNodeInjected, ChatScrollPosition, ChatViewInjected,
-  QuotaNoticeInjected, QuotaNoticeState, TurnTailOwnerProps,
+  QuotaNoticeInjected, QuotaNoticeState, ToolGroupExpansionState, TurnTailOwnerProps,
 } from './contract/slots.ts'
 import type { ChatSnapshot } from './contract/snapshot.ts'
 import { EMPTY_CHAT_SNAPSHOT } from './contract/snapshot.ts'
@@ -39,8 +40,10 @@ import { registerConversationNodes } from './conversation-nodes/register.ts'
 import { QuotaNoticeHost } from './chat/QuotaNoticeHost.tsx'
 import { en, ja, es, fr, de, ru, pt, NS, zh } from './locale.ts'
 import { TranscriptViewRow, type TranscriptViewRowInjected } from './settings/TranscriptViewRow.tsx'
+import { ToolGroupingRow, type ToolGroupingRowInjected } from './settings/ToolGroupingRow.tsx'
 import { createChatStore } from './stores.ts'
 import { TranscriptViewPolicy } from './transcript-view.ts'
+import { ToolGroupingPolicy } from './tool-grouping.ts'
 import { derivePresentationPolicy } from './presentation-policy.ts'
 import { CHAT_SETTINGS_NAMESPACE, DEFAULT_LINK_OPENING, DEFAULT_TRANSCRIPT_VIEW_MODE, type ChatSettings } from '../chat-settings.ts'
 import { LinkOpeningRow, type LinkOpeningRowInjected } from './settings/LinkOpeningRow.tsx'
@@ -169,7 +172,13 @@ export function apply(ctx: Context): void {
   const transcriptView = new TranscriptViewPolicy(chatSettings, 'dshDesktop' in globalThis ? 'standard' : DEFAULT_TRANSCRIPT_VIEW_MODE)
   const presentation = derivePresentationPolicy(transcriptView.mode, transcriptView.collapseTiming, transcriptView.foldedReplies)
   const performancePolicy = new PerformanceUsagePolicy(chatSettings)
-  ctx.effect(() => () => { transcriptView.dispose(); performancePolicy.dispose() })
+  const toolGroupingPolicy = new ToolGroupingPolicy(chatSettings)
+  const toolGroupExpansion = createSnapshotStore<ToolGroupExpansionState>({ all: false, generation: 0 })
+  ctx.effect(() => () => {
+    transcriptView.dispose()
+    performancePolicy.dispose()
+    toolGroupingPolicy.dispose()
+  })
   const performanceUsage = performancePolicy.mode
   registerChatNodeRenderers(ctx, performanceUsage, presentation)
   ctx.slots.registerFactory({
@@ -205,6 +214,40 @@ export function apply(ctx: Context): void {
     }),
   }, TranscriptViewRow))
 
+  ctx.slots.inject('settings.general.item', () => ctx.slots.register({
+    name: 'settings.general.item',
+    id: 'tool-grouping',
+    order: 13,
+    locale: NS,
+    inject: (): ToolGroupingRowInjected => ({
+      hooks: {
+        toolGrouping: toolGroupingPolicy.preferences,
+      },
+      setToolGrouping: (grouping) => { toolGroupingPolicy.setGrouping(grouping) },
+      setToolGroupThreshold: (threshold) => { toolGroupingPolicy.setThreshold(threshold) },
+    }),
+  }, ToolGroupingRow))
+
+  // The shortcut registry is optional: compositions without it keep every
+  // other Chat contribution, including the aggregate rows themselves.
+  ctx.inject(['shortcuts'], scope => scope.effect(() => scope.shortcuts.register({
+    id: 'chat.toolGroups.toggleAll' as ShortcutCommandId,
+    label: () => t('shortcut.toolGroupsToggleAll'),
+    aliases: ['tool groups', 'toggle tool groups'],
+    defaults: {
+      'desktop:macos': { code: 'KeyG', modifiers: ['primary', 'alt'] },
+      'desktop:windows': { code: 'KeyG', modifiers: ['primary', 'alt'] },
+      'desktop:linux': { code: 'KeyG', modifiers: ['primary', 'alt'] },
+      'web:macos': { code: 'KeyG', modifiers: ['primary', 'alt'] },
+      'web:windows': { code: 'KeyG', modifiers: ['primary', 'alt'] },
+    },
+    regions: ['page', 'editable'], modals: [],
+    resolve: () => ({ status: 'handled', run: () => {
+      const previous = toolGroupExpansion.getSnapshot()
+      toolGroupExpansion.set({ all: !previous.all, generation: previous.generation + 1 })
+    } }),
+  }), 'ui-chat: tool-group expansion shortcut'))
+
   const connectionState = (ctx.get('connection') as ConnectionHandle).state
   const nodeSources = (binding: SessionBinding): Pick<ChatViewInjected, 'keyedHooks'> => {
     const chat = chatSource(binding)
@@ -227,7 +270,16 @@ export function apply(ctx: Context): void {
     inject: (sessionId: SessionId): ChatFlowDataInjected => {
       const binding = ctx.sessions.binding(sessionId)
       if (binding === undefined) throw new Error(`ui-chat: unknown session "${sessionId}"`)
-      return { ...nodeSources(binding), hooks: { presentation, connectionState } }
+      return {
+        ...nodeSources(binding),
+        hooks: {
+          presentation,
+          connectionState,
+          toolGrouping: toolGroupingPolicy.preferences,
+          toolGroupExpansion,
+        },
+        summaryFor: toolName => ctx.uiConversation.toolGroups.forTool(toolName),
+      }
     },
   }, ChatFlow))
 
