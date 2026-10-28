@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render } from '@testing-library/react'
 import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
 import { en as commonEn, zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/index.ts'
@@ -26,6 +26,63 @@ function projections(values: Record<string, unknown>): ContextMeterProps['usePro
 function meter(values: Record<string, unknown>, translate: ContextMeterProps['t'] = t) {
   return render(<ContextMeter useProjection={projections(values)} t={translate} />)
 }
+
+describe('ContextMeter cache and compaction', () => {
+  const PRESSURE = { pressureTokens: 32_000, contextWindow: 128_000 }
+  const USAGE = (cacheRead: number, uncached: number) => ({
+    uncachedInputTokens: uncached, outputTokens: 1_000, cacheReadTokens: cacheRead, cacheWriteTokens: 0,
+  })
+
+  it('hides the cache row at or below the display floor and without input', () => {
+    const view = meter({ contextPressure: PRESSURE, tokenUsage: USAGE(5_000, 5_000) })
+    fireEvent.click(view.getByRole('button', { name: '上下文已用 25%' }))
+    expect(view.queryByRole('dialog')!.textContent).not.toContain('缓存命中')
+    cleanup()
+    const bare = meter({ contextPressure: PRESSURE, tokenUsage: USAGE(0, 0) })
+    fireEvent.click(bare.getByRole('button', { name: '上下文已用 25%' }))
+    expect(bare.queryByRole('dialog')!.textContent).not.toContain('缓存命中')
+  })
+
+  it('shows the cache hit rate above 0.78', () => {
+    const view = meter({ contextPressure: PRESSURE, tokenUsage: USAGE(8_400, 1_600) })
+    fireEvent.click(view.getByRole('button', { name: '上下文已用 25%' }))
+    expect(view.queryByRole('dialog')!.textContent).toContain('缓存命中 84%')
+  })
+
+  it('offers no compaction at or below 80 percent', () => {
+    const setDraft = vi.fn()
+    const view = render(<ContextMeter useProjection={projections({
+      contextPressure: PRESSURE,
+      tokenUsage: USAGE(8_400, 1_600),
+    })} t={t} inputActions={{ setDraft, submit: vi.fn() } as never} />)
+    fireEvent.click(view.getByRole('button', { name: '上下文已用 25%' }))
+    expect(view.queryByRole('button', { name: '立即压缩' })).toBeNull()
+    expect(setDraft).not.toHaveBeenCalled()
+  })
+
+  it('submits the compact command from above 80 percent and closes the panel', () => {
+    const setDraft = vi.fn()
+    const submit = vi.fn()
+    const view = render(<ContextMeter useProjection={projections({
+      contextPressure: { pressureTokens: 108_800, contextWindow: 128_000 },
+      tokenUsage: USAGE(8_400, 1_600),
+    })} t={t} inputActions={{ setDraft, submit } as never} />)
+    fireEvent.click(view.getByRole('button', { name: '上下文已用 85%' }))
+    fireEvent.click(view.getByRole('button', { name: '立即压缩' }))
+    expect(setDraft).toHaveBeenCalledWith('/compact')
+    expect(submit).toHaveBeenCalledOnce()
+    expect(view.queryByRole('dialog')).toBeNull()
+  })
+
+  it('offers no compaction without the composer action face', () => {
+    const view = meter({
+      contextPressure: { pressureTokens: 108_800, contextWindow: 128_000 },
+      tokenUsage: USAGE(8_400, 1_600),
+    })
+    fireEvent.click(view.getByRole('button', { name: '上下文已用 85%' }))
+    expect(view.queryByRole('button', { name: '立即压缩' })).toBeNull()
+  })
+})
 
 describe('ContextMeter', () => {
   it('computes occupancy only when both a numerator and capacity are known', () => {

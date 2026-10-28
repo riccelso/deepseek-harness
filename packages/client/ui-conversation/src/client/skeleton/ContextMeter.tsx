@@ -7,10 +7,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { UseProjection } from '@deepseek-ai/dsh-api-session-controller/client'
-// Type-only: the `contextPressure` / `contextBreakdown` projection key merges.
+// Type-only: the `contextPressure` / `contextBreakdown` / `tokenUsage` projection key merges.
 import type {} from '@deepseek-ai/dsh-token-meter/client'
+import type { TokenUsageProjection } from '@deepseek-ai/dsh-token-meter/client'
 import { Tooltip, useAnchoredPosition, useDismissOnOutsidePointer } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ComposerBarProps } from '../contract/slots.ts'
+import type { InputActions } from '../contract/input.ts'
 import { contextOccupancy } from '../context-occupancy.ts'
 import css from './ContextMeter.module.css'
 
@@ -51,11 +53,33 @@ export interface ContextMeterProps {
   useProjection: UseProjection
   /** The owning bar's locale seat, passed down as a plain prop. */
   t: ComposerBarProps['t']
+  /** The composer's action face; present only on a live session bar. */
+  inputActions?: InputActions | undefined
 }
 
-export function ContextMeter({ useProjection, t }: ContextMeterProps) {
+/** Cache reads must clear this share of all provider input before the rate earns a row. */
+const CACHE_RATE_FLOOR = 0.78
+/** Occupancy past which the panel offers manual compaction. */
+const COMPACT_THRESHOLD = 80
+
+/**
+ * Session cache-read share of provider input, hidden unless clearly useful.
+ * @param usage - cumulative provider usage of the session, when a provider reported any.
+ * @returns the hit rate above {@link CACHE_RATE_FLOOR}, or undefined to hide the row.
+ */
+function cacheHitRate(usage: TokenUsageProjection | undefined): number | undefined {
+  if (usage === undefined) return undefined
+  const input = usage.cacheReadTokens + usage.uncachedInputTokens
+  if (input <= 0) return undefined
+  const rate = usage.cacheReadTokens / input
+  return rate > CACHE_RATE_FLOOR ? rate : undefined
+}
+
+export function ContextMeter({ useProjection, t, inputActions }: ContextMeterProps) {
   const pressure = useProjection('contextPressure')
   const breakdown = useProjection('contextBreakdown')
+  const usage = useProjection('tokenUsage')
+  const cacheRate = cacheHitRate(usage)
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLSpanElement | null>(null)
   const panelRef = useRef<HTMLDivElement | null>(null)
@@ -171,6 +195,24 @@ export function ContextMeter({ useProjection, t }: ContextMeterProps) {
                 </div>
               ))}
             </dl>
+          )}
+          {cacheRate !== undefined && (
+            <p className={css.cache}>{t('context.cache', { rate: `${Math.round(cacheRate * 100)}%` })}</p>
+          )}
+          {percent > COMPACT_THRESHOLD && inputActions !== undefined && (
+            <button
+              type="button"
+              className={css.compact}
+              onClick={() => {
+                // One press submits the existing /compact command through the
+                // normal adjudication path; the panel closes as its feedback.
+                inputActions.setDraft('/compact')
+                inputActions.submit()
+                setOpen(false)
+              }}
+            >
+              {t('context.compact')}
+            </button>
           )}
         </div>,
         document.body,
