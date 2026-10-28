@@ -509,6 +509,11 @@ function makeHarness(
     useInteractionIds: bindSnapshotSelector(createSnapshotStore<readonly string[]>([])),
     dispatchInteraction: () => null,
     usePresentation: bindSnapshotSelector(derivePresentationPolicy(transcriptView, collapseTiming, foldedReplies)),
+    useChatFind: bindSnapshotSelector(createSnapshotStore(false)),
+    openChatFind: vi.fn(),
+    closeChatFind: vi.fn(),
+    readChatFind: () => undefined,
+    saveChatFind: vi.fn(),
     // The fixture implements the concrete flow dispatch behind the generic slot signature.
     renderSlot: renderSlot as ChatViewSlotProps['renderSlot'],
     SessionProvider: SessionProviderStub,

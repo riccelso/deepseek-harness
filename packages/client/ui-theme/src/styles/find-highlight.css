@@ -1,0 +1,12 @@
+/* Conversation find highlight layers, painted through the CSS Custom Highlight
+ * API by ui-chat's find bar. Two layers keep the active occurrence visibly
+ * stronger than the rest in both themes; text color stays inherited so
+ * contrast rides the theme's own label colors. */
+
+::highlight(dsh-chat-find) {
+  background-color: rgb(255 199 0 / 40%);
+}
+
+::highlight(dsh-chat-find-active) {
+  background-color: rgb(255 153 0 / 70%);
+}

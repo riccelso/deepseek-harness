@@ -130,6 +130,18 @@ Process rows share one text and icon color in every Work details mode: tertiary 
 -----
 
 <a id="scroll-ownership"></a>
+## Conversation find
+
+The optional `shortcuts` service carries `chat.find.open` (`primary+F` on Desktop, `primary+alt+F` on Web, which leaves the browser's own page find alone) and opens a floating find bar over the conversation panel. The bar searches the projected Node order, not the DOM: user, steering, and context text, assistant text and reasoning, tool names, arguments, and result text, command rows, and turn errors all feed one extracted text per Node, cached per Node object so streaming updates pay only for new and changed Nodes. Counting, order, and navigation derive from that index; hidden and collapsed rows stay searchable because visibility is a presentation fact.
+
+Matches navigate with Enter, Shift+Enter, and F3; navigating to a row inside a collapsed aggregate run or process group expands the enclosing disclosures before scrolling the row into view. Highlight painting goes through the CSS Custom Highlight API as an overlay — content, selection, and the persisted transcript are never mutated — with a stronger layer for the active occurrence ([layers](../ui-theme/README.md)); browsers without the API keep count and navigation without paint. Case sensitivity and regular-expression modes toggle beside the field, and a broken pattern reports inline instead of throwing. The term, options, and position persist per Session, so reopening the bar restores them; Escape closes it and clears the paint.
+
+## Conversation find
+
+The optional `shortcuts` service carries `chat.find.open` (`primary+F` on Desktop, `primary+alt+F` on Web, which leaves the browser's own page find alone) and opens a floating find bar over the conversation panel. The bar searches the projected Node order, not the DOM: user, steering, and context text, assistant text and reasoning, tool names, arguments, and result text, command rows, and turn errors all feed one extracted text per Node, cached per Node object so streaming updates pay only for new and changed Nodes. Counting, order, and navigation derive from that index; hidden and collapsed rows stay searchable because visibility is a presentation fact.
+
+Matches navigate with Enter, Shift+Enter, and F3; navigating to a row inside a collapsed aggregate run or process group expands the enclosing disclosures before scrolling the row into view. Highlight painting goes through the CSS Custom Highlight API as an overlay — content, selection, and the persisted transcript are never mutated — with a stronger layer for the active occurrence ([layers](../ui-theme/README.md)); browsers without the API keep count and navigation without paint. Case sensitivity and regular-expression modes toggle beside the field, and a broken pattern reports inline instead of throwing. The term, options, and position persist per Session, so reopening the bar restores them; Escape closes it and clears the paint.
+
 ## Scroll ownership
 
 Chat waits for initial history before automatic content, scroll, or size updates initialize reading state. Running Sessions restore their initial visibility and position before fold animations become eligible.

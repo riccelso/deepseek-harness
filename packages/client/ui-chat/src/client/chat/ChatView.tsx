@@ -14,6 +14,7 @@ import { isAtOrOutside } from '../contract/group-tree.ts'
 import type { ChatFlowHookContext, ChatViewSlotProps, OpenFileOptions } from '../contract/slots.ts'
 import type { ChatSnapshot } from '../contract/snapshot.ts'
 import { TurnNavigator } from './TurnNavigator.tsx'
+import { FindBar } from './FindBar.tsx'
 import { mergeTurnRailItems } from './turn-rail-items.ts'
 import { useTextInteraction } from './text-interaction.ts'
 import { useChatScroll } from './use-chat-scroll.ts'
@@ -62,7 +63,9 @@ export function ChatView({
   useSession, useChat, useConversation, useSessions, renderSlot,
   sessionId, openFile, openExternalLink, loadOlder, loadThrough, loadImage, inspectCall, chatScroll, forkAt, fileMentions,
   usePresentation, useProjection, useInteractionIds, dispatchInteraction, t, fileDrag,
+  useChatFind, closeChatFind, readChatFind, saveChatFind,
 }: ChatViewSlotProps) {
+  const chatFindOpen = useChatFind(open => open)
   const order = useChat(s => s.order)
   const groupedEntries = useConversation(snapshot => snapshot.views.grouped('chat')?.entries)
   const entries = useMemo<readonly RenderEntry[]>(() => groupedEntries
@@ -212,6 +215,17 @@ export function ChatView({
         />
       )}
       <div className={css.root} data-chat-following-tail={scroll.followingTail ? '' : undefined}>
+        {chatFindOpen && (
+          <FindBar
+            useChat={useChat}
+            containerRef={scroll.columnRef}
+            sessionId={sessionId}
+            t={t}
+            close={closeChatFind}
+            readSaved={readChatFind}
+            saveSaved={saveChatFind}
+          />
+        )}
         <div ref={scroll.listRef} className={css.scroll}>
           <div ref={scroll.columnRef} className={css.column} data-chat-flow=""
             data-chat-motion={deferCompletedTurns && scroll.initialized
