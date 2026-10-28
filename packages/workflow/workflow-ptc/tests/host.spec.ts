@@ -41,7 +41,7 @@ async function setup(execute?: (bindings: HostBindings, spec: PtcRunSpec) => Pro
   await ctx.plugin(SubagentRuntime)
   ctx.subagents.registerProvider({
     name: 'stub',
-    capabilities: { agentOptions: true, agentPreset: false, outputSchema: true, depthLimit: false },
+    capabilities: { agentOptions: true, agentPreset: false, toolFilter: false, outputSchema: true, depthLimit: false },
     inheritsParentContext: false,
     start: async () => ({
       id: SessionId('host-child'),

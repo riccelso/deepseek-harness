@@ -1,0 +1,37 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/api-btw/README.md
+/:
+  en: a822a9800df2ec05
+  zh: 675c6679542679c9
+/deepseek-ai-dsh-experimental-api-btw:
+  en: a29180960ba0477f
+  zh: 05dfb02fd6f10585
+/deepseek-ai-dsh-experimental-api-btw/summary:
+  en: 5a718eda73d04016
+  zh: a34d0ee2f7bc72a0
+/deepseek-ai-dsh-experimental-api-btw/table-of-contents:
+  en: 054c6d2af439db12
+  zh: 7de9d8bf605f9528
+/deepseek-ai-dsh-experimental-api-btw/use-this-package:
+  en: c2ecf9f8f963cbae
+  zh: 46c51c172e798163
+/deepseek-ai-dsh-experimental-api-btw/understand-the-implementation:
+  en: 72b57cec3ac1ffd9
+  zh: c6a89929c9ec9ad3
+/deepseek-ai-dsh-experimental-api-btw/further-exploration:
+  en: 1acb93855fced1ca
+  zh: b8fc91429fd9ad4e
+/deepseek-ai-dsh-experimental-api-btw/dev-note:
+  en: 11c2f145ccc9c154
+  zh: f76082d3dc876e87
+/deepseek-ai-dsh-experimental-api-btw/model-experience:
+  en: 199c3abf269bcf06
+  zh: cc6121ef17c1072f
+/deepseek-ai-dsh-experimental-api-btw/model-experience/kv-cache-effect:
+  en: 2bc116500c633033
+  zh: 2c6a8766d098e7a0
+/deepseek-ai-dsh-experimental-api-btw/known-limitations-and-deferred-work:
+  en: 8e58762a113cef15
+  zh: f370fa79cf1a3f77

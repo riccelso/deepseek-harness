@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "旁问",
+    "description": "通过 /btw 就当前对话提问，不改动对话本身。",
+    "detail": "docs/DETAIL.md"
+  }
+}

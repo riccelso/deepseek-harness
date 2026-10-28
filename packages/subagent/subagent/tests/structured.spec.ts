@@ -66,7 +66,7 @@ async function setup(script: Script, options: SetupOptions = {}) {
   await ctx.plugin(SubagentRuntime)
   const disposeProvider = ctx.subagents.registerProvider({
     name: 'spawn',
-    capabilities: { agentOptions: true, agentPreset: false, outputSchema: true, depthLimit: true },
+    capabilities: { agentOptions: true, agentPreset: false, toolFilter: false, outputSchema: true, depthLimit: true },
     inheritsParentContext: false,
     prepareContinuable: () => Promise.resolve({}),
   })
@@ -440,7 +440,7 @@ describe('in-process structured output', () => {
     const delegated = Promise.withResolvers<SubagentResult>()
     ctx.subagents.registerProvider({
       name: 'delayed-answer',
-      capabilities: { agentOptions: false, agentPreset: false, outputSchema: false, depthLimit: false },
+      capabilities: { agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false, depthLimit: false },
       inheritsParentContext: false,
       start: () => Promise.resolve({
         id: SessionId('delegated-answer'),

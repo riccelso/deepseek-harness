@@ -448,7 +448,7 @@ export class SubagentManager {
             descriptor,
           },
           agentOptions,
-          composition: { agentPreset: request.agentPreset },
+          composition: { agentPreset: request.agentPreset, toolFilter: request.toolFilter },
           signal: spec.signal,
           delivery: spec.delivery,
           outputSchema: spec.request.outputSchema,

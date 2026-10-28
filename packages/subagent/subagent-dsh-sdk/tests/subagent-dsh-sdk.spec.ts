@@ -854,6 +854,7 @@ describe('dsh-subagent-dsh-sdk provider', () => {
     expect(ctx.subagents.getProvider('sdk-hmr')?.capabilities).toEqual({
       agentOptions: true,
       agentPreset: false,
+      toolFilter: false,
       outputSchema: false,
       depthLimit: false,
     })

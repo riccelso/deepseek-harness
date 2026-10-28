@@ -15,6 +15,7 @@ import type {
 const DEFAULT_CAPABILITIES: SubagentCapabilities = {
   agentOptions: true,
   agentPreset: false,
+  toolFilter: false,
   outputSchema: true,
   depthLimit: true,
 }

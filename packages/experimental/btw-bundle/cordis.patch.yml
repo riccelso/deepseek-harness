@@ -1,0 +1,12 @@
+- insert:
+    - id: btw-engine
+      name: '@deepseek-ai/dsh-experimental-btw'
+      config:
+        maxOutputTokens: 1024
+        timeoutMs: 120000
+        historyLimit: 20
+        questionMaxLength: 2000
+    - id: api-btw
+      name: '@deepseek-ai/dsh-experimental-api-btw'
+    - id: ui-btw
+      name: '@deepseek-ai/dsh-experimental-client-ui-btw'

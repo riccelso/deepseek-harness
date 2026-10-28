@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "旁问 API",
+    "description": "为浏览器客户端回答 /btw 问题的 Remote 门面。"
+  }
+}

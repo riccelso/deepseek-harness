@@ -21,6 +21,8 @@ interface SubagentCapabilities {
   readonly agentOptions: boolean
   /** Supports selecting a preset independently of the parent's composition. */
   readonly agentPreset: boolean
+  /** Supports restricting the child's global tool visibility at start. */
+  readonly toolFilter: boolean
   readonly outputSchema: boolean
   readonly depthLimit: boolean
 }
@@ -76,6 +78,13 @@ interface SubagentStartRequest {
    * parent context.
    */
   readonly agentPreset?: string
+  /**
+   * Global-tool restriction applied to the child's context; restrictions
+   * intersect with any narrower scoped registration. Requires a provider with
+   * `capabilities.toolFilter`. An empty `allow` removes every global tool,
+   * which is how a caller builds a tool-less read-only child.
+   */
+  readonly toolFilter?: ToolRestriction
   /** Optional short display label persisted with a session-backed child. */
   readonly label?: string
   /** Content delivered as the child's user message. */

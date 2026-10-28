@@ -230,7 +230,7 @@ describe('dsh-tool-subagent', () => {
     await disposeSetupProvider(ctx)
     ctx.subagents.registerProvider({
       name: 'mock',
-      capabilities: { agentOptions: true, agentPreset: false, outputSchema: false, depthLimit: false },
+      capabilities: { agentOptions: true, agentPreset: false, toolFilter: false, outputSchema: false, depthLimit: false },
       inheritsParentContext: false,
       agentRouteDefaults: { provider: 'beta', model: 'replacement-model' },
       start: replacementStart,
@@ -316,7 +316,7 @@ describe('dsh-tool-subagent', () => {
     await ctx.plugin(SubagentRuntime)
     ctx.subagents.registerProvider({
       name: 'bare',
-      capabilities: { agentOptions: false, agentPreset: false, outputSchema: false, depthLimit: false },
+      capabilities: { agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false, depthLimit: false },
       inheritsParentContext: false,
       start: async (request) => {
         seen = request
@@ -457,7 +457,7 @@ describe('dsh-tool-subagent', () => {
     // the provider survives.
     ctx.subagents.registerProvider({
       name: 'continuable',
-      capabilities: { agentOptions: false, agentPreset: false, outputSchema: false, depthLimit: false },
+      capabilities: { agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false, depthLimit: false },
       inheritsParentContext: false,
       start: async () => { throw new Error('lifecycle test does not start a child') },
       prepareContinuable: async () => ({}),
@@ -525,7 +525,7 @@ describe('dsh-tool-subagent', () => {
     await ctx.plugin(SubagentRuntime)
     ctx.subagents.registerProvider({
       name: 'spy',
-      capabilities: { agentOptions: false, agentPreset: false, outputSchema: false, depthLimit: false },
+      capabilities: { agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false, depthLimit: false },
       inheritsParentContext: false,
       start: async (request) => {
         if (request.signal.aborted) sawAborted()
@@ -586,7 +586,7 @@ describe('dsh-tool-subagent', () => {
     await ctx.plugin(SubagentRuntime)
     ctx.subagents.registerProvider({
       name: 'capture2',
-      capabilities: { agentOptions: false, agentPreset: false, outputSchema: false, depthLimit: true },
+      capabilities: { agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false, depthLimit: true },
       inheritsParentContext: false,
       start: async (request) => {
         seen = request
@@ -648,7 +648,7 @@ describe('dsh-tool-subagent', () => {
     await ctx.plugin(SubagentRuntime)
     ctx.subagents.registerProvider({
       name: 'capture4',
-      capabilities: { agentOptions: false, agentPreset: false, outputSchema: false, depthLimit: false },
+      capabilities: { agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false, depthLimit: false },
       inheritsParentContext: false,
       start: async (request) => {
         seen = request
@@ -763,7 +763,7 @@ describe('dsh-tool-subagent local activation', () => {
     let survivingChildId: ReturnType<typeof SessionId> | undefined
     ctx.subagents.registerProvider({
       name: 'gated',
-      capabilities: { agentOptions: false, agentPreset: false, outputSchema: true, depthLimit: true },
+      capabilities: { agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: true, depthLimit: true },
       inheritsParentContext: false,
       start: async () => { throw new Error('continuable policy must not start a one-shot child') },
       prepareContinuable: async (request) => {
@@ -826,7 +826,7 @@ describe('depth budget configuration', () => {
     await ctx.plugin(SubagentRuntime)
     ctx.subagents.registerProvider({
       name: 'capture',
-      capabilities: { agentOptions: false, agentPreset: false, outputSchema: true, depthLimit: true },
+      capabilities: { agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: true, depthLimit: true },
       inheritsParentContext: false,
       start: async (request) => {
         requests.push(request)
@@ -854,7 +854,7 @@ describe('depth budget configuration', () => {
     await ctx.plugin(SubagentRuntime)
     ctx.subagents.registerProvider({
       name: 'no-depth',
-      capabilities: { agentOptions: false, agentPreset: false, outputSchema: false, depthLimit: false },
+      capabilities: { agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false, depthLimit: false },
       inheritsParentContext: false,
       start: async () => { throw new Error('unreachable') },
     })
@@ -869,7 +869,7 @@ describe('depth budget configuration', () => {
     await ctx.plugin(SubagentRuntime)
     ctx.subagents.registerProvider({
       name: 'external',
-      capabilities: { agentOptions: false, agentPreset: false, outputSchema: false, depthLimit: false },
+      capabilities: { agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false, depthLimit: false },
       inheritsParentContext: false,
       start: async (request) => {
         requests.push(request)

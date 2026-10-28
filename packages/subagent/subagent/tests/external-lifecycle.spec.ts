@@ -20,7 +20,7 @@ async function setup(start: (request: SubagentStartRequest) => Promise<SubagentR
   const parent = await externalTestParent(ctx)
   ctx.subagents.registerProvider({
     name: 'external', inheritsParentContext: false,
-    capabilities: { agentOptions: false, agentPreset: false, outputSchema: false, depthLimit: false },
+    capabilities: { agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false, depthLimit: false },
     start,
   })
   return {

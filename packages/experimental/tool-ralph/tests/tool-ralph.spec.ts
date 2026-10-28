@@ -62,6 +62,7 @@ class StubProvider implements SubagentProvider {
     this.capabilities = {
       agentOptions: true,
       agentPreset: false,
+      toolFilter: false,
       outputSchema: options?.outputSchema ?? true,
       depthLimit: true,
     }
