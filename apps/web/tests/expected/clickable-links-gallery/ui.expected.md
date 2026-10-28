@@ -11,6 +11,7 @@
 - status: Completed
 - button "Completed in {{duration}}" [expanded]
 - button "Wrote files, ran commands, called tools, etc." [expanded]
+- button "5 writes" [expanded]
 - button "Write site/report.html 1KB +1 -0":
   - text: Write
   - button "site/report.html"
@@ -65,6 +66,7 @@
 - text: "3: color: var(--linkColor); 7: color: var(--linkColor); 11: color: var(--linkColor);"
 - button "Inspect"
 - button "Glob **/*.css"
+- button "4 commands" [expanded]
 - button "Bash List the built site"
 - button "Failed Bash Run the lint gate exit code 1" [expanded]
 - text: Failed site pnpm run lint exit code 1

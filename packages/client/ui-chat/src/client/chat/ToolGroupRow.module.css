@@ -1,0 +1,124 @@
+.root {
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--dsw-alias-label-tertiary);
+  font: inherit;
+  font-size: var(--dsh-content-font-size, 14px);
+  line-height: calc(24px + var(--dsh-content-font-delta, 0px));
+  text-align: left;
+  cursor: pointer;
+  transition: color 100ms ease;
+}
+
+@media (hover: hover) {
+  .head:hover {
+    color: var(--dsw-alias-label-secondary);
+  }
+}
+
+.unit {
+  min-width: 0;
+  overflow: hidden;
+  font-size: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: inherit;
+  transition: transform 100ms ease;
+}
+
+.root[data-tool-group-open] .chevron {
+  transform: rotate(180deg);
+}
+
+/* Layout-transparent body: expanded member rows keep their ordinary flow slots. */
+.body {
+  display: contents;
+}
+
+.item {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  gap: 6px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: var(--dsh-content-font-size, 14px);
+  line-height: calc(22px + var(--dsh-content-font-delta, 0px));
+}
+
+.itemDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  corner-shape: round;
+  background: var(--dsw-alias-state-business-primary);
+}
+
+.item[data-tool-group-status='error'] .itemDot,
+.item[data-tool-group-status='error'] .jump {
+  background-color: var(--dsw-alias-state-error-primary);
+}
+
+.item[data-tool-group-status='error'] {
+  color: var(--dsw-alias-label-primary);
+}
+
+.item[data-tool-group-status='running'] .itemDot,
+.item[data-tool-group-status='preparing'] .itemDot {
+  background: var(--dsw-alias-label-tertiary);
+}
+
+.item[data-tool-group-status='stopped'] .itemDot {
+  background: var(--dsw-alias-state-warn-primary);
+}
+
+.itemLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemDetail {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+  font-family: var(--ds-font-family-code);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+
+.jump {
+  flex: none;
+  padding: 0 6px;
+  border: none;
+  border-radius: 999px;
+  corner-shape: round;
+  color: var(--dsw-alias-bg-base);
+  font: inherit;
+  font-size: 0.85em;
+  line-height: 16px;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .head,
+  .chevron {
+    transition: none;
+  }
+}

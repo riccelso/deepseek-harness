@@ -23,6 +23,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type { createChatStore } from '../stores.ts'
 import type { ChatPresentationPolicy } from '../presentation-policy.ts'
+import type { ToolGroupingPreferences } from '../tool-grouping.ts'
 import type { FlowMotionRows } from '../chat/flow-motion.ts'
 import type { ToolCallId } from './store.ts'
 import type { ChatConversationViewNode, ChatNode, ChatNodeKind } from './chat-nodes.ts'
@@ -296,6 +297,14 @@ export interface PerformanceUsageInjected {
   }
 }
 
+/** Shared default for aggregate Tool-run disclosure across the visible conversation. */
+export interface ToolGroupExpansionState {
+  /** Rows without an explicit override follow this default. */
+  readonly all: boolean
+  /** Advances whenever the shared default flips, retiring stale row overrides. */
+  readonly generation: number
+}
+
 /** Business callbacks injected into the Chat view. */
 export interface ChatViewInjected {
   /** File preparation and failure callbacks owned by the file-drag plugin. */
@@ -338,7 +347,18 @@ export type ChatFlowDataInjected = Pick<ChatViewInjected, 'keyedHooks'> & {
   hooks: Pick<ChatViewInjected['hooks'], 'presentation'> & {
     /** Client connection lifecycle; the running clock pauses while it is not connected. */
     connectionState: ConnectionStateSource
+    /** Live aggregate-row preferences derived from the accepted settings. */
+    toolGrouping: ObservableSnapshot<ToolGroupingPreferences>
+    /** Shared aggregate-row disclosure default and its generation. */
+    toolGroupExpansion: ObservableSnapshot<ToolGroupExpansionState>
   }
+  /**
+   * Summary provider lookup for aggregate rows. Providers register at plugin
+   * load, so lookups are stable for the life of a rendered flow.
+   * @param toolName - wire tool name.
+   * @returns its summary rules, when registered.
+   */
+  summaryFor: (toolName: string) => import('@deepseek-ai/dsh-client-ui-conversation/client').ToolGroupSummarySpec | undefined
 }
 
 /** Ordered rows and reconciled local echoes rendered inside one Chat viewport. */

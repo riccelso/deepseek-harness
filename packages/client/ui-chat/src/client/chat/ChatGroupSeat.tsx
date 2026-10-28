@@ -1,5 +1,5 @@
 /** Stable process container; display policy changes visibility, never member parents. */
-import { memo, useCallback, useEffect, useId, useRef, useState, type ComponentProps, type ReactNode } from 'react'
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react'
 import {
   IconAgentPresetOutlineRegular, IconApiOutlineRegular, IconBrowseOutlineRegular, IconChevronDownOutlineRegular,
   IconChevronUpOutlineRegular, IconCodeOutlineRegular, IconEditOutlineRegular, IconGlobeOutlineRegular,
@@ -14,7 +14,9 @@ import { turnProcessOpen } from '../stores.ts'
 import { ChatNodeSeat } from './ChatNodeSeat.tsx'
 import { hiddenOrCollapsing } from './flow-motion.ts'
 import { chatRenderKey } from './render-entry.ts'
+import { planToolRuns, type ToolRunSegment } from './plan-tool-runs.ts'
 import { processTitle } from './step-process.ts'
+import { ToolGroupRow } from './ToolGroupRow.tsx'
 import { useDisclosure } from './use-disclosure.ts'
 import { useProcessScroll } from './use-process-scroll.ts'
 import css from './ChatGroupSeat.module.css'
@@ -24,6 +26,9 @@ type ChatGroupSeatProps = SeatProps & {
   readonly groupKey: GroupKey
   readonly useChatGroup: ChatFlowSlotProps['useChatGroup']
   readonly useGroupHeaderAction: ChatFlowSlotProps['useGroupHeaderAction']
+  readonly useToolGrouping: ChatFlowSlotProps['useToolGrouping']
+  readonly useToolGroupExpansion: ChatFlowSlotProps['useToolGroupExpansion']
+  readonly summaryFor: ChatFlowSlotProps['summaryFor']
 }
 const PROCESS_TITLE_MINIMUM_MS = 150
 
@@ -82,11 +87,38 @@ function useStableLiveProcessTitle(desired: LiveProcessTitle, active: boolean): 
 }
 
 
-const GroupMembers = memo(function GroupMembers({ members, ...props }: SeatProps & {
+const GroupMembers = memo(function GroupMembers({
+  members, useToolGrouping, useToolGroupExpansion, summaryFor, nodeStore, cwd, ...props
+}: SeatProps & {
   readonly members: readonly NodeReference[]
+  readonly useToolGrouping: ChatFlowSlotProps['useToolGrouping']
+  readonly useToolGroupExpansion: ChatFlowSlotProps['useToolGroupExpansion']
+  readonly summaryFor: ChatFlowSlotProps['summaryFor']
 }) {
-  return members.map(member => <ChatNodeSeat {...props} key={chatRenderKey(member)} nodeKey={member.key}
-    {...member.groupPart === undefined ? {} : { groupPart: member.groupPart }} />)
+  const { enabled, threshold } = useToolGrouping(preferences => preferences)
+  const segments = useMemo<readonly ToolRunSegment[] | null>(() => enabled
+    ? planToolRuns(members, { threshold, summaryFor, readNode: key => nodeStore.get(key) })
+    : null, [members, enabled, threshold, summaryFor, nodeStore])
+  const seat = (member: NodeReference): ReactNode => (
+    <ChatNodeSeat {...props} nodeStore={nodeStore} key={chatRenderKey(member)} nodeKey={member.key}
+      {...member.groupPart === undefined ? {} : { groupPart: member.groupPart }} />
+  )
+  if (segments === null) return members.map(seat)
+  return segments.map(segment => segment.kind === 'single'
+    ? seat(segment.member)
+    : (
+      <ToolGroupRow
+        key={`tool-group:${segment.toolName}:${segment.members[0]?.key ?? ''}`}
+        toolName={segment.toolName}
+        members={segment.members}
+        spec={segment.spec}
+        cwd={cwd}
+        t={props.t}
+        useChatNode={props.useChatNode}
+        useToolGroupExpansion={useToolGroupExpansion}
+        renderMember={seat}
+      />
+    ))
 })
 
 const ProcessGroupHeader = memo(function ProcessGroupHeader({ groupKey, useChatGroup, usePresentation, t, open, bodyId, toggle }: {
@@ -129,7 +161,9 @@ const ProcessGroupHeader = memo(function ProcessGroupHeader({ groupKey, useChatG
 })
 
 /** Render a process group with local disclosure and the existing outer-Turn visibility. */
-export const ChatGroupSeat = memo(function ChatGroupSeat({ groupKey, useChatGroup, useGroupHeaderAction, ...props }: ChatGroupSeatProps) {
+export const ChatGroupSeat = memo(function ChatGroupSeat({
+  groupKey, useChatGroup, useGroupHeaderAction, useToolGrouping, useToolGroupExpansion, summaryFor, ...props
+}: ChatGroupSeatProps) {
   const members = useChatGroup(groupKey, group => group?.members)
   const turn = useChatGroup(groupKey, group => group?.data.turn)
   const closed = useChatGroup(groupKey, group => group?.data.closed)
@@ -199,7 +233,8 @@ export const ChatGroupSeat = memo(function ChatGroupSeat({ groupKey, useChatGrou
         data-scroll-up={edges.canScrollUp || undefined} data-scroll-down={edges.canScrollDown || undefined}
         {...events}>
         <div ref={contentRef} className={css.content} data-step-process-content data-chat-flow="">
-          <GroupMembers {...props} members={members} />
+          <GroupMembers {...props} members={members}
+            useToolGrouping={useToolGrouping} useToolGroupExpansion={useToolGroupExpansion} summaryFor={summaryFor} />
         </div>
       </div>
     </div>

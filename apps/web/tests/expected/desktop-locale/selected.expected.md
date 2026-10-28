@@ -26,6 +26,10 @@
   - button "On completion"
   - text: Replies After Collapse Choose which assistant replies stay visible when work details collapse
   - button "All replies"
+  - text: Tool call grouping Collapse consecutive calls of the same tool into one summary row
+  - button "On"
+  - text: Grouping threshold Collapse after this many consecutive calls
+  - button "3 calls"
   - text: Show coding view Shows trajectory, code diffs, and all Agent presets
   - switch "Show coding view" [checked]
   - text: Keyboard shortcuts

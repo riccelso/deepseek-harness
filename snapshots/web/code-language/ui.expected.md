@@ -3,7 +3,7 @@
 - button "Read sample.pyi" [expanded]:
   - text: Read
   - button "sample.pyi"
-- text: py sample.pyi
+- text: py {{cwd}}/workspace/sample.pyi
 - button "Wrap lines"
 - button "Copy"
 - text: "from typing import Protocol class Greeter(Protocol): def greet(self, name: str) -> str: ..."
@@ -20,7 +20,7 @@
 - button "Read deploy.ps1" [expanded]:
   - text: Read
   - button "deploy.ps1"
-- text: ps1 deploy.ps1
+- text: ps1 {{cwd}}/workspace/deploy.ps1
 - button "Wrap lines"
 - button "Copy"
 - text: param([string]$Name = "World") Write-Host "Hello, $Name"
@@ -37,7 +37,7 @@
 - button "Read table.csv" [expanded]:
   - text: Read
   - button "table.csv"
-- text: csv table.csv
+- text: csv {{cwd}}/workspace/table.csv
 - button "Wrap lines"
 - button "Copy"
 - text: name,count apples,12 pears,7

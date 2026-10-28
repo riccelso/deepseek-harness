@@ -35,7 +35,7 @@ import {
   webSnapshotMode,
   type WebScaffold,
 } from './scaffold.ts'
-import { openSettings, expandTurnProcesses, newEnglishPage, saveFailureShot } from './support.ts'
+import { openSettings, expandToolGroups, expandTurnProcesses, newEnglishPage, saveFailureShot } from './support.ts'
 
 const SNAPSHOT_DIR = fileURLToPath(new URL('./expected/clickable-links-gallery', import.meta.url))
 const UI_EXPECTED = fileURLToPath(new URL('./expected/clickable-links-gallery/ui.expected.md', import.meta.url))
@@ -379,17 +379,25 @@ describe('web e2e: clickable links gallery', () => {
     expect(await page.locator('[data-changed-files]').count()).toBe(0)
     expect(await page.locator('button[aria-label="Open c/broken.css"]').count()).toBe(0)
 
-    // Tool rows: five writes, the edit, and the read carry the dotted file
-    // link; the failed write row does not, and neither does str_replace_editor
-    // — TOOL_VARIANTS has no entry for it, so it falls to the generic row with
-    // no openable path even though its create still joins the produced chips.
-    expect(await page.locator('button[class*="fileLink"]').count()).toBe(7)
+    // Aggregate rows: the five consecutive writes collapse into one counted
+    // row whose per-call summaries stand in for the individual cards.
+    const writeGroup = page.locator('[data-tool-group="write"][data-tool-group-count="5"]')
+    await expect.poll(() => writeGroup.count(), { timeout: 10_000 }).toBe(1)
+    expect(await writeGroup.locator('[data-tool-group-status]').count()).toBe(5)
+    expect(await page.locator('button[class*="fileLink"]').count()).toBe(2)
+
     // The collapsed web-fetch row's summary is its URL, opened in a new tab.
     const fetchSummaryLink = page.locator(`a[class*="fileLink"][href="${FETCH_URL}"]`)
     expect(await fetchSummaryLink.count()).toBe(1)
     expect(await fetchSummaryLink.getAttribute('target')).toBe('_blank')
 
     await expandTurnProcesses(page)
+    // With the process bodies open, expanding the aggregate write run restores
+    // the individual write rows and their file links: five writes, the edit,
+    // and the read carry the dotted file link; the failed write row does not,
+    // and neither does str_replace_editor, which falls to the generic row.
+    await expandToolGroups(page)
+    expect(await page.locator('button[class*="fileLink"]').count()).toBe(7)
     const failedCommands = [
       { description: 'Run the lint gate', long: false },
       { description: LONG_COMMAND_DESCRIPTION, long: true },

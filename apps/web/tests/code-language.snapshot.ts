@@ -8,7 +8,7 @@ import {
   captureStableAria, compareOrRefreshGolden, fixtureUserPrompts, launchWebScaffold,
   recordFixture, watchConsole, webSnapshotMode,
 } from './scaffold.ts'
-import { connectFreshWorkspace, expandTurnProcesses, newEnglishPage } from './support.ts'
+import { connectFreshWorkspace, expandToolGroups, expandTurnProcesses, newEnglishPage } from './support.ts'
 
 const DIR = fileURLToPath(new URL('../../../snapshots/web/code-language', import.meta.url))
 const FIXTURE = join(DIR, 'session.v4.jsonl')
@@ -53,6 +53,7 @@ it('replays highlighted Python stubs, PowerShell and CSV reads with their docume
     if (MODE === 'record') await recordFixture(scaffold, sessionId, FIXTURE)
 
     await expandTurnProcesses(page)
+    await expandToolGroups(page)
     await page.locator('[data-sidebar-right-expand]').click()
     await page.locator('[data-sidebar-right-guide-entry="files"]').click()
     const filesTab = page.locator('[data-dockkit-tab]').filter({ has: page.getByText('Files', { exact: true }) })

@@ -24,6 +24,7 @@ import { ConversationEventRegistry } from './event-registry.ts'
 import { HistoricalImageCache } from './historical-images.ts'
 import { ConversationViewRegistry } from './view-registry.ts'
 import { ConversationGroupRegistry } from './group-registry.ts'
+import { ToolGroupSummaryRegistry } from './tool-group-registry.ts'
 import { ConversationInteractionRegistry } from './interaction-registry.ts'
 import { UserTextRegistry } from './user-text-registry.ts'
 
@@ -192,6 +193,8 @@ export class UiConversation extends Service {
   readonly views: ConversationViewRegistry
   /** Business grouping rules over already materialized target Nodes. */
   readonly groups: ConversationGroupRegistry
+  /** Pure summary providers for aggregate Tool-call rows, keyed by tool name. */
+  readonly toolGroups: ToolGroupSummaryRegistry
   /** Pure text rules and parser snapshots, independent of durable Session assembly. */
   readonly userText: UserTextRegistry
   /** Plugin-owned handlers for selection and context-menu gestures. */
@@ -208,6 +211,7 @@ export class UiConversation extends Service {
     this.events = new ConversationEventRegistry(ctx)
     this.views = new ConversationViewRegistry(ctx)
     this.groups = new ConversationGroupRegistry(ctx, this.views)
+    this.toolGroups = new ToolGroupSummaryRegistry(ctx)
     this.userText = new UserTextRegistry(ctx)
     this.interactions = new ConversationInteractionRegistry(ctx)
     this.images = new HistoricalImageCache(ctx, sessions)
