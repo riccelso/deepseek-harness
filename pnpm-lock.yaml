@@ -2381,6 +2381,9 @@ importers:
       '@deepseek-ai/dsh-authorization':
         specifier: workspace:*
         version: link:../../credentials/authorization
+      '@deepseek-ai/dsh-bash-readonly-policy':
+        specifier: workspace:*
+        version: link:../../guard/bash-readonly-policy
       '@deepseek-ai/dsh-bash-sandbox':
         specifier: workspace:*
         version: link:../../shell/bash-sandbox
@@ -11637,6 +11640,22 @@ importers:
       '@deepseek-ai/dsh-tool-testkit':
         specifier: workspace:*
         version: link:../../test-support/tool-testkit
+      '@deepseek-ai/dsh-tools':
+        specifier: workspace:*
+        version: link:../../core/tools
+
+  packages/guard/bash-readonly-policy:
+    dependencies:
+      unbash:
+        specifier: 4.0.1
+        version: 4.0.1
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@deepseek-ai/dsh-bash-readonly-policy':
+        specifier: workspace:*
+        version: 'link:'
       '@deepseek-ai/dsh-tools':
         specifier: workspace:*
         version: link:../../core/tools
@@ -24780,6 +24799,10 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  unbash@4.0.1:
+    resolution: {integrity: sha512-1ajSo3813sDoVIHx4inJdUS4l5L2ic5cFiddemPiyjb/PZEoBAhFwHtbaEdRDFxbAKy7FCG7s5ww3/uCFawuIA==}
+    engines: {node: '>=14'}
+
   unconfig-core@7.5.0:
     resolution: {integrity: sha512-Su3FauozOGP44ZmKdHy2oE6LPjk51M/TRRjHv2HNCWiDvfvCoxC2lno6jevMA91MYAdCdwP05QnWdWpSbncX/w==}
 
@@ -32762,6 +32785,8 @@ snapshots:
       vscode-languageserver-protocol: 3.18.2
 
   typescript@6.0.3: {}
+
+  unbash@4.0.1: {}
 
   unconfig-core@7.5.0:
     dependencies:

@@ -291,6 +291,14 @@ export default defineConfig({
         'packages/client/ui-layout/src/*',
         'packages/client/web/src/*',
         'packages/host/webserver/src/*',
+        // Ported ZCode static-analysis library: the argv parser, flag tables,
+        // git/gh catalogs, and dangerous-command matchers arrive as a pinned
+        // upstream copy. Behavior is gated through classifyBashReadonly by the
+        // corpus and property suite (zero false negatives over the write
+        // vocabulary); per-branch coverage here would re-create upstream's own
+        // internal test suite. TODO(bash-readonly): upstream the coverage with
+        // the next lib sync or trim unused matchers at adoption time.
+        'packages/guard/bash-readonly-policy/src/analyzer/**',
         // The browser-worker runtime and its image packer: the executing
         // composition is a real dedicated Worker driven by the web browser lane
         // (apps/web/tests/preview-boot.e2e.ts), which unit-process V8 coverage

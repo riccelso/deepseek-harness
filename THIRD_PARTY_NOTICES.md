@@ -141,6 +141,7 @@ External packages installed for runtime use or embedded in distributed Host or b
 | [`tsx`](https://github.com/privatenumber/tsx) | MIT |
 | [`turndown`](https://github.com/mixmark-io/turndown) | MIT |
 | [`typescript`](https://github.com/microsoft/TypeScript) | Apache-2.0 |
+| [`unbash`](https://github.com/webpro-nl/unbash) | ISC |
 | [`undici`](https://github.com/nodejs/undici) | MIT |
 | [`use-sync-external-store`](https://github.com/facebook/react) | MIT |
 | [`which`](https://github.com/isaacs/node-which) | ISC |

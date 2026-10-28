@@ -20,6 +20,15 @@ const PROTOCOL_STATICS = new Set(['Config', 'inject', 'name', 'reusable'])
 /** Plugin-protocol slot names exempt as top-level exports (const or function). */
 const PROTOCOL_EXPORTS = new Set(['Config', 'inject', 'name', 'reusable', 'apply'])
 
+/**
+ * Pinned upstream-port sources whose cross-file members are exported for the
+ * package's own assembly only; their documentation contract lives upstream and
+ * the package's public surface stays fully documented. Mirrors the matching
+ * coverage exclusion in vitest.config.ts.
+ */
+const PINNED_PORT_SOURCES = new Set(globSync('packages/guard/bash-readonly-policy/src/analyzer/**/*.ts')
+  .map(path => path.split(sep).join('/')))
+
 /** Per-file walk state threaded through the scope recursion. */
 interface Walk {
   rel: string
@@ -569,6 +578,7 @@ export function collectExportJsdocViolations(scanRoot: string = root): string[] 
   const rels = globSync('packages/*/*/src/**/*.ts', { cwd: scanRoot })
     .map(path => path.split(sep).join('/'))
     .sort()
+    .filter(rel => !PINNED_PORT_SOURCES.has(rel))
   const program = ts.createProgram(rels.map(rel => resolve(scanRoot, rel)), loadCompilerOptions(scanRoot))
   const checker = program.getTypeChecker()
   const { restrictedPackages, namesByFile } = restrictedPublicNames(scanRoot, rels, program, checker)
