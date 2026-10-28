@@ -1,0 +1,186 @@
+/* Side-question tab body: a full-height parallel chat; theme variables keep both schemes intact. */
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  font-size: 13px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--dsw-alias-line-bold);
+}
+
+.evicted {
+  margin: 0;
+  padding: 6px 14px 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+}
+
+.transcript {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 12px 14px;
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+}
+
+.emptyWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.empty {
+  margin: 0;
+  color: var(--dsw-alias-label-tertiary);
+  text-align: center;
+}
+
+.exchange {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.question {
+  align-self: flex-end;
+  max-width: 85%;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 12px 12px 4px 12px;
+  background: var(--dsw-alias-bg-layer-2);
+  border: 1px solid var(--dsw-alias-line-bold);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.imageNote {
+  opacity: 0.7;
+  font-size: 12px;
+}
+
+.answerBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.answerBlock > div {
+  align-self: stretch;
+  min-width: 0;
+}
+
+.copy {
+  align-self: flex-start;
+}
+
+.pending {
+  margin: 0;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.cancelled {
+  margin: 0;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.meta {
+  margin: 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.error {
+  margin: 0;
+  color: var(--dsw-alias-label-red, inherit);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 14px 0;
+}
+
+.thumbWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.thumb {
+  height: 48px;
+  max-width: 96px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--dsw-alias-line-bold);
+  display: block;
+}
+
+.thumbRemove {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  padding: 2px;
+  border-radius: 999px;
+  corner-shape: round;
+  background: var(--dsw-alias-bg-layer-1);
+  border: 1px solid var(--dsw-alias-line-bold);
+}
+
+.pickError {
+  margin: 0;
+  padding: 4px 14px 0;
+  color: var(--dsw-alias-label-red, inherit);
+  font-size: 12px;
+}
+
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--dsw-alias-line-bold);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  max-height: 160px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--dsw-alias-line-bold);
+  background: var(--dsw-alias-bg-layer-2, transparent);
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  line-height: 1.45;
+  resize: none;
+  overflow-y: auto;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--dsw-alias-label-primary);
+}

@@ -12,6 +12,7 @@ The setup tutorial takes a new contributor from prerequisites to a checked check
 - Node.js TypeScript type stripping enabled. The repository build scripts load `tsdown.config.ts` with tsdown's native config loader, so they fail when `--no-experimental-strip-types` is in `NODE_OPTIONS` or the Node.js build lacks TypeScript support; `pnpm run build` checks this first and names the cause.
 - Corepack-enabled pnpm. The repo pins `pnpm@11.28.5` in `package.json`; run `corepack enable` if `pnpm --version` does not resolve through Corepack.
 - Git 2.26 or newer; hook setup enables Git's worktree-specific configuration extension.
+- Linux desktop development only: libvips with headers (8.18.7 or newer) and a C++ toolchain, because `dev:desktop` builds a source sharp against the system libvips — the prebuilt binding crashes under Electron's Linux runtime ([Desktop README](../apps/desktop/README.md#develop)).
 - Optional: a DeepSeek API key for the Web, headless, and ACP automation demos and real-API e2e tests.
 
 ### Windows and WSL 2

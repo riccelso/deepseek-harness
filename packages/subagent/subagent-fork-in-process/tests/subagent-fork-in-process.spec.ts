@@ -1,5 +1,6 @@
 import { mountWorkingDirectoryFixture } from '../../subagent/tests/working-directory-fixture.ts'
 import { mountLocalActivations, startTestActivation as start } from '../../subagent/tests/local-activation.ts'
+import { scopeOf } from '@deepseek-ai/dsh-scope'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
@@ -186,9 +187,36 @@ describe('dsh-subagent-fork-in-process', () => {
     expect(ctx.subagents.getProvider('fork')!.capabilities).toEqual({
       agentOptions: true,
       agentPreset: false,
+      toolFilter: true,
       outputSchema: true,
       depthLimit: true,
     })
+  })
+
+  it('applies a start-time tool filter: an empty allow removes every global tool', async () => {
+    const { ctx, parent } = await setup([textResponse('tool-less child answer')])
+    const remove = ctx.tools.register({
+      name: 'probe',
+      description: 'tool probe',
+      parameters: { type: 'object', properties: {} },
+      output: { schema: { type: 'string' }, render: () => [{ type: 'text', text: 'ran' }] },
+      execute: () => Promise.resolve('ran'),
+    })
+    try {
+      expect(parent.ctx.tools.get('probe')).toBeDefined()
+      const run = await start(ctx, 'fork', {
+        prompt: [{ type: 'text', text: 'child q' }],
+        parent,
+        toolFilter: { allow: [] },
+      })
+      const child = ctx.agents.get(run.id)!
+      expect(ctx.tools.get('probe', scopeOf(child.ctx))).toBeUndefined()
+      expect(ctx.tools.get('probe', scopeOf(parent.ctx))).toBeDefined()
+      expect((await run.result).output).toBeDefined()
+      await run.dispose()
+    } finally {
+      remove()
+    }
   })
 
   it('unregisters the provider when its fiber is disposed (HMR safety)', async () => {

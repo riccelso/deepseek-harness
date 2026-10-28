@@ -22,6 +22,7 @@ describe('NO_START_CAPABILITIES', () => {
     expect(NO_START_CAPABILITIES).toEqual({
       agentOptions: false,
       agentPreset: false,
+      toolFilter: false,
       outputSchema: false,
       depthLimit: false,
     })

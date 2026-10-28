@@ -11,6 +11,7 @@ import { developmentRuntimeDirectory, resolveDesktopBuildTarget } from './deskto
 import { prepareDevelopmentProject } from './development-project.ts'
 import { prepareDevelopmentApp } from './development-app.ts'
 import { preparePrimaryRuntime } from './prepare-primary-runtime.ts'
+import { prepareSharpElectron } from './prepare-sharp-electron.ts'
 
 const APP_ROOT = resolve(import.meta.dirname, '..')
 const REPOSITORY_ROOT = resolve(APP_ROOT, '..', '..')
@@ -120,6 +121,15 @@ async function main(): Promise<void> {
     release,
     target: resolveDesktopBuildTarget(),
   })
+  if (process.platform === 'linux') {
+    const electron: unknown = createRequire(import.meta.url)('electron')
+    if (typeof electron !== 'string') throw new Error('desktop development: electron executable is unavailable')
+    await prepareSharpElectron({
+      output: join(DEVELOPMENT_ROOT, 'sharp-electron'),
+      scratch: join(BUILD_ROOT, 'tmp', 'sharp-electron'),
+      electron,
+    })
+  }
   await preparePrimaryRuntime()
   await launchElectron()
 }

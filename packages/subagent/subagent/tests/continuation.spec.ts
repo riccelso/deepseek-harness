@@ -572,7 +572,7 @@ describe('SubagentRuntime.startActivation', () => {
     const start = vi.fn(async () => { throw new Error('must not dispatch') })
     ctx.subagents.registerProvider({
       name: 'one-shot',
-      capabilities: { agentOptions: false, agentPreset: false, outputSchema: false, depthLimit: false },
+      capabilities: { agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false, depthLimit: false },
       inheritsParentContext: false,
       start,
     })
@@ -1054,7 +1054,7 @@ describe('direct-child Queue residency routing', () => {
     const { ctx, parent } = await setup([textResponse('first'), textResponse('after resume')])
     const disposeProvider = ctx.subagents.registerProvider({
       name: 'retired',
-      capabilities: { agentOptions: false, agentPreset: false, outputSchema: false, depthLimit: false },
+      capabilities: { agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false, depthLimit: false },
       inheritsParentContext: false,
       start: async () => { throw new Error('one-shot start is not used') },
       prepareContinuable: () => Promise.resolve({}),
@@ -3687,7 +3687,7 @@ describe('continuable errors', () => {
       ctx.subagents.registerProvider({
         name: 'external', inheritsParentContext: false,
         capabilities: {
-          agentOptions: false, agentPreset: false, outputSchema: false, depthLimit: false,
+          agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false, depthLimit: false,
         },
         start: async ({ signal }) => {
           entered.resolve(signal)

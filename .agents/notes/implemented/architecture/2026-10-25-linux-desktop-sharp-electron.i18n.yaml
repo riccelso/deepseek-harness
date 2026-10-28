@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-10-25-linux-desktop-sharp-electron.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-10-25-linux-desktop-sharp-electron.md
+/agent-note-sharp-under-electron-on-linux-crashes-development-hosts:
+  en: 308a4e13c697246d
+  zh: 01cd85abeb411f25
+/agent-note-sharp-under-electron-on-linux-crashes-development-hosts/problem:
+  en: 0d20c56a92aa0117
+  zh: 95c2a776da91046e
+/agent-note-sharp-under-electron-on-linux-crashes-development-hosts/decision:
+  en: 751c27697fbda2c9
+  zh: 950aad30bfeb6dd7
+/agent-note-sharp-under-electron-on-linux-crashes-development-hosts/consequences:
+  en: 16d9b71e99d20fe6
+  zh: d47356c54204c2be
+/agent-note-sharp-under-electron-on-linux-crashes-development-hosts/alternatives-considered:
+  en: 76186ee515096795
+  zh: 65794abd8ad8a422

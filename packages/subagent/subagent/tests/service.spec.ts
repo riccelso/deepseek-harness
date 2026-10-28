@@ -30,11 +30,11 @@ function fakeParent(id = 'parent-1'): Agent {
 }
 
 const ALL_CAPS: SubagentCapabilities = {
-  agentOptions: true, agentPreset: true, outputSchema: true,
+  agentOptions: true, agentPreset: true, toolFilter: false, outputSchema: true,
   depthLimit: true,
 }
 const NO_CAPS: SubagentCapabilities = {
-  agentOptions: false, agentPreset: false, outputSchema: false,
+  agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false,
   depthLimit: false,
 }
 

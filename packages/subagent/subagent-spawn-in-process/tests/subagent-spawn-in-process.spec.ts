@@ -268,6 +268,7 @@ describe('dsh-subagent-spawn-in-process', () => {
     expect(provider.capabilities).toEqual({
       agentOptions: true,
       agentPreset: true,
+      toolFilter: false,
       outputSchema: true,
       depthLimit: true,
     })

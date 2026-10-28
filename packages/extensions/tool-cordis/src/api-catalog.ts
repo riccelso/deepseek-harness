@@ -606,6 +606,55 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'btw',
+    summary: 'The side-question engine.',
+    description: 'The side-question engine. Forks a Session\'s resident agent with every global tool denied, resolves the answer from the child activation\'s result, and retains the exchanges of every addressed Session in memory.',
+    methods: [
+      {
+        signature: 'async ask( sessionId: SessionId, question: string, signal: AbortSignal, images: readonly EncodedImageAttachment[] = [], ): Promise<BtwExchange>',
+        description: 'Answer one side question by forking the Session\'s resident agent with every global tool denied.',
+        parameters: [{ name: 'sessionId', description: 'Session the question is about; its agent must be resident.' }, { name: 'question', description: 'trimmed side question.' }, { name: 'signal', description: 'caller cancellation; aborts the fork child and discards the exchange.' }, { name: 'images', description: 'canonical-base64 images to admit and attach to the question.' }],
+        returns: 'the completed exchange, also recorded in this Session\'s ring.',
+        throws: ['when the question is empty or too long, the Session has no resident agent to fork, an image is rejected by the attachment store, or the fork ends without a text answer.'],
+      },
+      {
+        signature: 'history(sessionId: SessionId): BtwHistory',
+        description: 'Read the retained exchanges of one Session.',
+        parameters: [{ name: 'sessionId', description: 'Session whose ring is read.' }],
+        returns: 'retained exchanges in log order and the count of evicted older ones.',
+      },
+      {
+        signature: 'clear(sessionId: SessionId): void',
+        description: 'Discard every retained exchange of one Session.',
+        parameters: [{ name: 'sessionId', description: 'Session whose ring is cleared.' }],
+      },
+    ],
+  },
+  {
+    key: 'btwController',
+    summary: 'Side questions never activate or submit to an Agent.',
+    description: 'Side questions never activate or submit to an Agent.',
+    methods: [
+      {
+        signature: '@Remote async ask( sessionId: SessionId, question: string, images: readonly EncodedImageAttachment[], signal: AbortSignal, ): Promise<BtwExchange>',
+        description: 'Answer one side question about a Session from what it already contains.',
+        parameters: [{ name: 'sessionId', description: 'Session the question is about.' }, { name: 'question', description: 'side question exactly as asked.' }, { name: 'images', description: 'canonical-base64 images to attach to the question.' }, { name: 'signal', description: 'Client cancellation or Remote contribution disposal.' }],
+        returns: 'the completed exchange without adding a Session event.',
+      },
+      {
+        signature: '@Remote history(sessionId: SessionId): BtwHistory',
+        description: 'Read the retained side-question exchanges of one Session.',
+        parameters: [{ name: 'sessionId', description: 'Session whose retained exchanges are read.' }],
+        returns: 'retained exchanges in log order and the count of evicted older ones.',
+      },
+      {
+        signature: '@Remote clear(sessionId: SessionId): void',
+        description: 'Discard every retained exchange of one Session.',
+        parameters: [{ name: 'sessionId', description: 'Session whose retained exchanges are cleared.' }],
+      },
+    ],
+  },
+  {
     key: 'claudeCodeMods',
     summary: 'The bridge service: loaded mods, their hooks, and the harness listeners that raise their events.',
     description: 'The bridge service: loaded mods, their hooks, and the harness listeners that raise their events. Mods join through ClaudeCodeMods.add, which defineMod calls when a mod plugin mounts. The Remote methods let a Client draw each session\'s band above the prompt and press its buttons.',
@@ -5249,6 +5298,22 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type BrowserUseProviderName = Branded<\'BrowserUseProviderName\'>;',
   },
   {
+    name: 'BtwExchange',
+    declaration: 'export interface BtwExchange {\n    readonly question: string;\n    readonly imageCount?: number;\n    readonly answer: string;\n    readonly at: number;\n    readonly route?: BtwModelRoute;\n    readonly usage?: BtwTokenUsage;\n}',
+  },
+  {
+    name: 'BtwHistory',
+    declaration: 'export interface BtwHistory {\n    readonly entries: readonly BtwExchange[];\n    readonly dropped: number;\n}',
+  },
+  {
+    name: 'BtwModelRoute',
+    declaration: 'export interface BtwModelRoute {\n    readonly provider: string;\n    readonly model: string;\n}',
+  },
+  {
+    name: 'BtwTokenUsage',
+    declaration: 'export interface BtwTokenUsage {\n    readonly inputTokens: number;\n    readonly outputTokens: number;\n    readonly totalTokens?: number;\n}',
+  },
+  {
     name: 'BundleDetail',
     declaration: 'export type BundleDetail = {\n    readonly status: \'found\';\n    readonly origin: \'locale\' | \'readme\';\n    readonly path: string;\n    readonly markdown: string;\n} | {\n    readonly status: \'none\';\n};',
   },
@@ -8218,7 +8283,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'SubagentCapabilities',
-    declaration: 'export interface SubagentCapabilities {\n    readonly agentOptions: boolean;\n    readonly agentPreset: boolean;\n    readonly outputSchema: boolean;\n    readonly depthLimit: boolean;\n}',
+    declaration: 'export interface SubagentCapabilities {\n    readonly agentOptions: boolean;\n    readonly agentPreset: boolean;\n    readonly toolFilter: boolean;\n    readonly outputSchema: boolean;\n    readonly depthLimit: boolean;\n}',
   },
   {
     name: 'SubagentCatalogEntry',
@@ -8294,7 +8359,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'SubagentStartRequest',
-    declaration: 'export interface SubagentStartRequest {\n    readonly cwd?: string;\n    readonly agentPreset?: string;\n    readonly label?: string;\n    readonly prompt: ContentBlock[];\n    readonly parent: Agent;\n    readonly signal: AbortSignal;\n    readonly agentOptions?: AgentOptions;\n    readonly outputSchema?: ObjectJsonSchema;\n    readonly maxDepth?: number;\n}',
+    declaration: 'export interface SubagentStartRequest {\n    readonly cwd?: string;\n    readonly agentPreset?: string;\n    readonly toolFilter?: ToolRestriction;\n    readonly label?: string;\n    readonly prompt: ContentBlock[];\n    readonly parent: Agent;\n    readonly signal: AbortSignal;\n    readonly agentOptions?: AgentOptions;\n    readonly outputSchema?: ObjectJsonSchema;\n    readonly maxDepth?: number;\n}',
   },
   {
     name: 'SubagentStopReason',

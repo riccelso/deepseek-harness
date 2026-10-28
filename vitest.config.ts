@@ -337,6 +337,8 @@ export default defineConfig({
         // The speech entry also imports generated Remote definitions; voice-input.e2e.ts
         // exercises the built entry, while source tests cover mountVoiceInput.
         'packages/experimental/client-ui-voice-input/src/client/index.ts',
+        // The btw entry imports its generated Remote contribution; source tests cover the mount controller.
+        'packages/experimental/client-ui-btw/src/client/index.ts',
         // Built Web replays cover the generated Remote wiring of the card entries; their mount modules are source-covered.
         'packages/experimental/client-ui-action-cards/src/client/index.ts',
         'packages/experimental/client-ui-plugin-recommendations/src/client/index.ts',

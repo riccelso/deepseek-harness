@@ -1558,6 +1558,7 @@ describe('dsh-subagent-acp', () => {
     expect(provider.capabilities).toEqual({
       agentOptions: false,
       agentPreset: false,
+      toolFilter: false,
       outputSchema: false,
       depthLimit: false,
     })

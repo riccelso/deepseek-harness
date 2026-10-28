@@ -433,7 +433,7 @@ it('reads the saved default depth at each delegation without remounting the tool
   try {
     ctx.subagents.registerProvider({
       name: 'capture-depth',
-      capabilities: { agentOptions: true, agentPreset: false, outputSchema: true, depthLimit: true },
+      capabilities: { agentOptions: true, agentPreset: false, toolFilter: false, outputSchema: true, depthLimit: true },
       inheritsParentContext: false,
       start: async (request) => {
         depths.push(request.maxDepth)

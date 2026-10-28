@@ -13,7 +13,7 @@ import type { Agent, AgentOptions } from '@deepseek-ai/dsh-agent'
 import type { Branded } from '@deepseek-ai/dsh-brand'
 import type { ContentBlock, MessageId } from '@deepseek-ai/dsh-llm'
 import type { SessionEvent, SessionId } from '@deepseek-ai/dsh-session'
-import type { ObjectJsonSchema } from '@deepseek-ai/dsh-tools'
+import type { ObjectJsonSchema, ToolRestriction } from '@deepseek-ai/dsh-tools'
 
 /** Identifies one accepted subagent run across its lifecycle event pair. */
 export type SubagentRunId = Branded<'SubagentRunId'>
@@ -124,6 +124,8 @@ export interface SubagentCapabilities {
   readonly agentOptions: boolean
   /** Supports selecting a preset independently of the parent's composition. */
   readonly agentPreset: boolean
+  /** Supports restricting the child's global tool visibility at start. */
+  readonly toolFilter: boolean
   readonly outputSchema: boolean
   readonly depthLimit: boolean
 }
@@ -142,6 +144,13 @@ export interface SubagentStartRequest {
    * parent context.
    */
   readonly agentPreset?: string
+  /**
+   * Global-tool restriction applied to the child's context; restrictions
+   * intersect with any narrower scoped registration. Requires a provider with
+   * `capabilities.toolFilter`. An empty `allow` removes every global tool,
+   * which is how a caller builds a tool-less read-only child.
+   */
+  readonly toolFilter?: ToolRestriction
   /** Optional short display label persisted with a session-backed child. */
   readonly label?: string
   /** Content delivered as the child's user message. */

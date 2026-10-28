@@ -12,7 +12,7 @@ import { externalTestParent } from './external-activation-helpers.ts'
 import { subagentManager } from './manager-internals.ts'
 
 const capabilities: SubagentCapabilities = {
-  agentOptions: false, agentPreset: false, outputSchema: false, depthLimit: false,
+  agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false, depthLimit: false,
 }
 
 async function setup(start: (request: SubagentStartRequest) => Promise<SubagentRun>) {

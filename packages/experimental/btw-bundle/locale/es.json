@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Preguntas laterales",
+    "description": "Pregunta con /btw sobre la conversación actual sin añadirla a ella.",
+    "detail": "docs/DETAIL.md"
+  }
+}

@@ -54,6 +54,8 @@ export const SERVICE_PAGE: Record<string, string> = {
   translator: 'translation.md',
   cotTranslation: 'translation.md',
   speechToText: 'voice-input.md',
+  btw: 'btw.md',
+  btwController: 'btw.md',
   speechController: 'voice-input.md',
   otel: 'otel.md',
   productTelemetry: 'product-telemetry.md',
@@ -1026,6 +1028,8 @@ export const TYPE_LINK_EXEMPTIONS: Readonly<Record<string, string>> = {
   TerminalFrame: 'Browser terminal stream frames are owned by packages/api/terminal-controller/README.md',
   TerminalRetentionFrame: 'Browser terminal window holds are owned by packages/api/terminal-controller/README.md',
   WebTerminalId: 'Browser terminal identity is owned by packages/api/terminal-controller/README.md',
+  BtwExchange: 'Side-question exchange fields are owned by packages/experimental/btw/README.md',
+  BtwHistory: 'Side-question retention fields are owned by packages/experimental/btw/README.md',
 }
 
 /** Repository data policy consumed by the Cordis catalog projector. */

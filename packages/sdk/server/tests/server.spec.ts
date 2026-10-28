@@ -101,7 +101,7 @@ async function settleSubagent(
   const result = Promise.withResolvers<SubagentResult>()
   const disposeProvider = ctx.subagents.registerProvider({
     name: info.provider,
-    capabilities: { agentOptions: false, agentPreset: false, outputSchema: false, depthLimit: false },
+    capabilities: { agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false, depthLimit: false },
     inheritsParentContext: false,
     async start() {
       return {
@@ -719,7 +719,7 @@ describe('HarnessSdkJsonRpcServer', () => {
       const disposeProvider = ctx.subagents.registerProvider({
         name: 'reused',
         capabilities: {
-          agentOptions: false, agentPreset: false, outputSchema: false,
+          agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false,
           depthLimit: false,
         },
         inheritsParentContext: false,
@@ -818,7 +818,7 @@ describe('HarnessSdkJsonRpcServer', () => {
       const unregisterLocal = ctx.subagents.registerProvider({
         name: 'reused-provider',
         capabilities: {
-          agentOptions: false, agentPreset: false, outputSchema: false,
+          agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false,
           depthLimit: false,
         },
         inheritsParentContext: false,
@@ -838,7 +838,7 @@ describe('HarnessSdkJsonRpcServer', () => {
       const unregisterRemote = ctx.subagents.registerProvider({
         name: 'reused-provider',
         capabilities: {
-          agentOptions: false, agentPreset: false, outputSchema: false,
+          agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false,
           depthLimit: false,
         },
         inheritsParentContext: false,
@@ -922,7 +922,7 @@ describe('HarnessSdkJsonRpcServer', () => {
       const disposeMissedStartProvider = ctx.subagents.registerProvider({
         name: 'fork',
         capabilities: {
-          agentOptions: false, agentPreset: false, outputSchema: false,
+          agentOptions: false, agentPreset: false, toolFilter: false, outputSchema: false,
           depthLimit: false,
         },
         inheritsParentContext: true,

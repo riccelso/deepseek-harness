@@ -1,0 +1,13 @@
+# Bilingual-pair consistency record for btw.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/subsystems/btw.md
+/side-questions:
+  en: 752a69f0592a17a2
+  zh: 81ed9a175c16ddc8
+/side-questions/isolation-guarantees:
+  en: af5a0f05ae144e6f
+  zh: 6a152060f5b43b47
+/side-questions/service-behavior:
+  en: ec92bbb21bef46c8
+  zh: e5caadffcee2c7a8
