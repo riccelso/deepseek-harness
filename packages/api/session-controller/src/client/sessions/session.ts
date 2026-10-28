@@ -718,11 +718,6 @@ export class Session implements SessionFace {
       this.notifier.markDirty()
       return
     }
-    if (result?.type === 'abandonment') {
-      this.eventSource.settleAssistant(result.attemptId)
-      this.notifier.markDirty()
-      return
-    }
     if (result?.type === 'publish') {
       const changed = this.appendLive(result.entry)
       if (result.retireAttemptId !== undefined) this.eventSource.settleAssistant(result.retireAttemptId)

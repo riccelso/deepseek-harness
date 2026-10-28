@@ -26,6 +26,7 @@ import type { WebCardModelProps } from '../models/web-card-model.ts'
 import { AskQuestionCard } from './AskQuestionCard.tsx'
 import { ToolDetails, type ToolDetailsModel } from './ToolDetails.tsx'
 import { ExitCodeBadge } from './ExitCodeBadge.tsx'
+import { CancelledBadge } from './CancelledBadge.tsx'
 import css from './ToolRow.module.css'
 
 export interface ToolRowProps {
@@ -41,8 +42,8 @@ export interface ToolRowProps {
   /**
    * Trailing summary fragment rendered outside the ellipsized summary text, so
    * a narrow row clips the summary before this. Appears before diff totals
-   * when both are present. null/absent omits this fragment. Error and stopped
-   * rows omit both the suffix and diff totals.
+   * when both are present. null/absent omits this fragment. Error, stopped,
+   * and cancelled rows omit both the suffix and diff totals.
    */
   summarySuffix?: string | null | undefined
   /** Original argument JSON formatted only while the row is expanded. */
@@ -109,6 +110,7 @@ function stateStatus(state: ToolRowState, t: TranslateNS<'conversation'>): strin
   switch (state) {
     case 'preparing': return t('row.preparing')
     case 'running': return t('row.running')
+    case 'cancelled': return t('row.cancelled')
     case 'error': return t('row.failed')
     case 'stopped': return t('row.stopped')
     default: return null
@@ -117,7 +119,8 @@ function stateStatus(state: ToolRowState, t: TranslateNS<'conversation'>): strin
 
 /**
  * Render one localized tool summary and lazily mounted result card.
- * Preparation retains the icon, title, and optional tool-name summary without disclosure.
+ * Preparation retains the icon, title, and optional tool-name summary without
+ * disclosure; a cancelled preparation adds the cancelled cue beside its summary.
  * @param props - tool state, summary, output, and navigation callbacks.
  * @returns the tool disclosure.
  */
@@ -171,7 +174,8 @@ export const ToolRow = memo(function ToolRow({
   const inputRaw = bodyRaw ?? null
   const outputText = output ?? null
   const card = askQuestionBody ?? terminalBody ?? diffBody ?? readBody ?? imageBody ?? searchBody ?? webBody ?? detailsBody
-  const expandable = state !== 'preparing' && (inputRaw !== null || outputText !== null || card !== null)
+  const pending = state === 'preparing' || state === 'cancelled'
+  const expandable = !pending && (inputRaw !== null || outputText !== null || card !== null)
   const open = expanded && expandable
   const bodyText = useMemo(
     () => open && card === null && inputRaw !== null ? formatToolBody(variant, inputRaw) : null,
@@ -186,7 +190,7 @@ export const ToolRow = memo(function ToolRow({
   const summaryText = failureLine ?? normalSummary
   // Diff totals remain visible after the optional summary suffix.
   const diffStat = useMemo(() => diffBody === null ? null : diffTotals(diffBody.card.diffs), [diffBody])
-  const settledWithCue = state === 'error' || state === 'stopped'
+  const settledWithCue = state === 'error' || state === 'stopped' || state === 'cancelled'
   const suffix = settledWithCue ? null : summarySuffix ?? null
   const totals = settledWithCue ? null : diffStat
   const openFile = useMemo(() => filePath !== undefined && onOpenFile !== undefined && !settledWithCue
@@ -245,6 +249,7 @@ export const ToolRow = memo(function ToolRow({
         </span>
       )}
       {exitLabel !== null && <ExitCodeBadge label={exitLabel} />}
+      {state === 'cancelled' && <CancelledBadge label={t('row.cancelled')} />}
       {suffix !== null && (
         <TextShimmer className={css.summarySuffix}>{suffix}</TextShimmer>
       )}
@@ -254,7 +259,7 @@ export const ToolRow = memo(function ToolRow({
         </TextShimmer>
       )}
     </>
-  ), [summaryLinkKeyDown, linkHref, openFile, state, suffix, totals, summaryText, exitLabel])
+  ), [summaryLinkKeyDown, linkHref, openFile, state, suffix, totals, summaryText, exitLabel, t])
   const expandedContent = useMemo(() => open ? (
     <div className={clsx(css.bodyWrap, detailsBody !== null && css.detailsBodyWrap)}>
       {askQuestionBody !== null

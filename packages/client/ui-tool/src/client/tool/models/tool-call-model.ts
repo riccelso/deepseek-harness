@@ -16,7 +16,7 @@ export type { ToolCallBlock } from '@deepseek-ai/dsh-client-ui-chat/client'
 export type ToolRowVariant = 'search' | 'read' | 'bash' | 'write' | 'edit' | 'code' | 'others'
 
 /** Row lifecycle state used by summary styling and accessible status text. */
-export type ToolRowState = 'preparing' | 'running' | 'ok' | 'error' | 'stopped'
+export type ToolRowState = 'preparing' | 'running' | 'cancelled' | 'ok' | 'error' | 'stopped'
 
 /** Locale-neutral structured fact consumed only by the user-facing Tool row. */
 export interface AutoReviewDenial {
@@ -246,22 +246,44 @@ const FILE_PATH_KEYS = ['path', 'file_path'] as const
 /** File-tool variants whose summary may be an openable workspace path. */
 const FILE_PATH_VARIANTS: ReadonlySet<ToolRowVariant> = new Set(['read', 'write', 'edit'])
 
+/** UTF-16 read cap for argument summaries; a field longer than the cap carries the truncation marker. */
+const ARGUMENT_SUMMARY_PREFIX_CHARS = 4096
+
+/**
+ * First line of one argument string, read at the summary cap so a streamed
+ * field of any size renders bounded text and stops requesting republication
+ * once the cap is reached. A newline inside the capped prefix ended the line;
+ * only the cap itself adds the truncation marker.
+ * @param args - argument view read at every call stage.
+ * @param key - argument field name.
+ * @returns the bounded first line, or undefined when the field is absent or not a string.
+ */
+function summaryLine(args: ToolArgs, key: string): string | undefined {
+  const prefix = args.textPrefix(key, ARGUMENT_SUMMARY_PREFIX_CHARS)
+  if (prefix === undefined) return undefined
+  const line = firstLine(prefix)
+  if (line.length < prefix.length) return line
+  return args.stringExceeds(key, ARGUMENT_SUMMARY_PREFIX_CHARS) ? `${line}…` : line
+}
+
 /**
  * Summary material read the same way at every stage from the argument view: a
  * complete `file_path` for file tools, otherwise the `description` text so far.
- * Empty when the view carries neither, so the caller falls back to the raw text.
+ * Both reads stop at the summary cap, so a streamed multi-kilobyte field shows
+ * one bounded line. Empty when the view carries neither, so the caller falls
+ * back to the raw text.
  */
 function argumentSummary(
   variant: ToolRowVariant, args: ToolArgs, cwd?: string, home?: string,
 ): { summary: string; filePath: string | undefined } {
   if (FILE_PATH_VARIANTS.has(variant)) {
-    const path = args.complete('file_path') ? args.text('file_path') : undefined
+    const path = args.complete('file_path') ? summaryLine(args, 'file_path') : undefined
     // Decoding text can discover an invalid escape and make complete() false.
-    const filePath = path !== undefined && path !== '' && args.complete('file_path') ? firstLine(path) : undefined
+    const filePath = path !== undefined && path !== '' && args.complete('file_path') ? path : undefined
     return { summary: filePath === undefined ? '' : abbreviateHomePath(relativizeToCwd(filePath, cwd), home), filePath }
   }
-  const description = args.text('description')
-  return { summary: description === undefined ? '' : firstLine(description), filePath: undefined }
+  const description = summaryLine(args, 'description')
+  return { summary: description === undefined ? '' : description, filePath: undefined }
 }
 
 function deriveFilePath(variant: ToolRowVariant, argsRaw: string): string | undefined {
@@ -311,7 +333,8 @@ export function toolRowModel(toolName: string, block: ToolCallBlock, cwd?: strin
     && (isAbsoluteWorkspacePath(argumentPath) || done && !block.isError && block.parentCallId === undefined)
   const filePath = argumentPath === undefined ? undefined
     : recordedPath ?? (canUseArgumentPath ? argumentPath : undefined)
-  const state: ToolRowState = !done ? block.phase === 'preparing' ? 'preparing' : 'running'
+  const state: ToolRowState = !done
+    ? block.phase === 'preparing' ? block.cancelled === true ? 'cancelled' : 'preparing' : 'running'
     : block.error?.code === 'interrupted' ? 'stopped'
       : block.isError ? 'error' : 'ok'
   // The argument view serves every stage; the raw text is the fallback when it carries nothing useful.

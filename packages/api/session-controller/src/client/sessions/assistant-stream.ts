@@ -22,12 +22,24 @@ interface ActiveAttempt {
   nextIndex: number
 }
 
+/** One finished attempt whose transient rows are still retained as presentation. */
+interface RetainedAttempt {
+  readonly attemptId: LlmAttemptId
+  readonly turn: number
+  readonly step: number
+  /**
+   * An interrupted or abandoned attempt keeps its rows past its Step end as the
+   * cancelled tool-input record; the next Turn's start retires them.
+   */
+  readonly interrupted: boolean
+}
+
 /** One Web publication decision from the assistant stream fold. */
 export type ClientAssistantStreamResult =
   | {
     readonly type: 'publish'
     readonly entry: SessionLiveEventEntry
-    /** Retire the successful attempt's transient rows after publishing its Step end. */
+    /** Retire the retained attempt's transient rows after publishing this entry. */
     readonly retireAttemptId?: LlmAttemptId
   }
   | {
@@ -35,7 +47,6 @@ export type ClientAssistantStreamResult =
     readonly attemptId: LlmAttemptId
     readonly entry: SessionAssistantSettlementEntry
   }
-  | { readonly type: 'abandonment'; readonly attemptId: LlmAttemptId }
   | { readonly type: 'transient'; readonly entry: SessionTransientEventEntry }
   | { readonly type: 'rebaseline' }
   | undefined
@@ -43,7 +54,7 @@ export type ClientAssistantStreamResult =
 /** Keeps transient Assistant presentation behind one settlement-aware interface. */
 export class ClientAssistantStream {
   private activeAttempt: ActiveAttempt | undefined
-  private retainedAttempt: Pick<ActiveAttempt, 'attemptId' | 'turn' | 'step'> | undefined
+  private retainedAttempt: RetainedAttempt | undefined
   private readonly pending = new Map<number, SessionAssistantSettlementEntry>()
   private publishedSeqs = new Set<number>()
   private durableCursor = -1
@@ -122,7 +133,9 @@ export class ClientAssistantStream {
   /**
    * Fold one dense transient frame and release its named durable settlement.
    * Successful messages retain their transient rows until the owning Step ends;
-   * interrupted messages, failed attempts, and abandonment retire them immediately.
+   * interrupted messages and abandonments retain them until the next Turn
+   * starts, so a cancelled tool input stays readable; failed attempts retire
+   * them immediately.
    * @param frame - next Assistant stream frame received by the follow connection.
    * @returns a transient, publication, or rebaseline decision, or `undefined` when no entry becomes visible.
    */
@@ -175,9 +188,13 @@ export class ClientAssistantStream {
         this.activeAttempt = undefined
         if (frame.index !== attempt.nextIndex) return { type: 'rebaseline' }
         if (frame.outcome.kind === 'abandoned') {
-          return this.pending.size === 0
-            ? { type: 'abandonment', attemptId: attempt.attemptId }
-            : { type: 'rebaseline' }
+          if (this.pending.size > 0) return { type: 'rebaseline' }
+          // An abandoned attempt's rows are the only record of its streamed
+          // tool input; retire them when the next Turn starts.
+          this.retainedAttempt = {
+            attemptId: attempt.attemptId, turn: attempt.turn, step: attempt.step, interrupted: true,
+          }
+          return undefined
         }
         if (this.publishedSeqs.has(frame.outcome.seq)) return undefined
         const entry = this.pending.get(frame.outcome.seq)
@@ -185,9 +202,12 @@ export class ClientAssistantStream {
           || entry.event.type !== frame.outcome.eventType) {
           return { type: 'rebaseline' }
         }
-        this.pending.delete(frame.outcome.seq)
-        if (entry.event.type === 'assistant/message' && entry.event.data.interrupted !== true) {
-          this.retainedAttempt = { attemptId: attempt.attemptId, turn: attempt.turn, step: attempt.step }
+        this.pending.delete(entry.event.seq)
+        if (entry.event.type === 'assistant/message') {
+          this.retainedAttempt = {
+            attemptId: attempt.attemptId, turn: attempt.turn, step: attempt.step,
+            interrupted: entry.event.data.interrupted === true,
+          }
           return this.publish(entry)
         }
         this.publishedSeqs.add(entry.event.seq)
@@ -211,10 +231,19 @@ export class ClientAssistantStream {
   private publish(entry: SessionLiveEventEntry): ClientAssistantStreamResult {
     this.publishedSeqs.add(entry.event.seq)
     const retained = this.retainedAttempt
-    if (retained !== undefined && entry.event.type === 'step/end'
-      && entry.event.data.turn === retained.turn && entry.event.data.step === retained.step) {
-      this.retainedAttempt = undefined
-      return { type: 'publish', entry, retireAttemptId: retained.attemptId }
+    if (retained !== undefined) {
+      // A completed message's rows are redundant once its Step end is visible;
+      // an interrupted or abandoned attempt's rows carry the cancelled tool
+      // input, so only the next Turn's start retires them.
+      if (entry.event.type === 'step/end' && !retained.interrupted
+        && entry.event.data.turn === retained.turn && entry.event.data.step === retained.step) {
+        this.retainedAttempt = undefined
+        return { type: 'publish', entry, retireAttemptId: retained.attemptId }
+      }
+      if (entry.event.type === 'turn/start' && retained.interrupted) {
+        this.retainedAttempt = undefined
+        return { type: 'publish', entry, retireAttemptId: retained.attemptId }
+      }
     }
     return { type: 'publish', entry }
   }

@@ -300,6 +300,11 @@ export type ToolArgs = PartialArguments
 /** A named model call whose complete arguments are not yet available to tool views. */
 export interface PreparingToolCall extends ToolCallHead {
   readonly phase: 'preparing'
+  /**
+   * Present when the owning stream ended before this call dispatched; the row
+   * shows a cancelled cue until the attempt's transient rows retire.
+   */
+  readonly cancelled?: true
 }
 
 /** A dispatched tool call with complete arguments and no result yet. */
