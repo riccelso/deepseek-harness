@@ -144,7 +144,9 @@ export function processActivity(nodes: readonly ChatNode[]): ProcessActivitySumm
     const call = isRunningTool(tool) ? tool : tool.call
     if (call !== null) {
       const kind = activity(call.name)
-      if (isRunningTool(tool) && tool.time >= runningTime) {
+      // A cancelled preparation is a settled cue on its row, not live activity.
+      if (isRunningTool(tool) && (tool.phase !== 'preparing' || tool.cancelled !== true)
+        && tool.time >= runningTime) {
         running = kind
         preparing = tool.phase === 'preparing'
         runningDetail = liveToolDetail(tool.name, tool.args)

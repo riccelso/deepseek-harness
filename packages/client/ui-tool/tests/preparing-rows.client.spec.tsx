@@ -189,4 +189,60 @@ describe('tool preparation', () => {
     expect(view.getByText('List files')).toBeTruthy()
     expect(view.queryByRole('button')).toBeNull()
   })
+
+  it.each([
+    ['bash', 'description', BashRow],
+    ['write', 'file_path', FileMutationRow],
+  ] as const)('caps a %s preparation summary at 4 KiB with a truncation marker', (name, field, Component) => {
+    const args = new PartialArguments()
+    args.append(field === 'description'
+      ? `{"description":"${'d'.repeat(5000)}`
+      : `{"file_path":"${'f'.repeat(5000)}"`)
+    const props = preparation(name, args)
+    const view = render(<Component {...props} useSessions={vi.fn()} />)
+    const model = toolRowModel(name, props.block)
+    expect(model.summary.length).toBe(4097)
+    expect(model.summary.endsWith('…')).toBe(true)
+    expect(view.container.textContent).not.toContain('d'.repeat(4100))
+    expect(view.container.textContent).not.toContain('f'.repeat(4100))
+  })
+
+  it('ends a preparation summary at the field first line without a marker', () => {
+    const args = new PartialArguments()
+    args.append('{"description":"first line\nsecond line"}')
+    const props = preparation('bash', args)
+    expect(toolRowModel('bash', props.block).summary).toBe('first line')
+  })
+
+  it('stops republishing a capped summary while the field keeps streaming', () => {
+    const args = new PartialArguments()
+    args.append(`{"description":"${'a'.repeat(4096)}`)
+    const props = preparation('bash', args)
+    expect(toolRowModel('bash', props.block).summary).toBe('a'.repeat(4096))
+    args.append('more text beyond the cap')
+    expect(props.block.args.refresh()).toBe(true)
+    expect(toolRowModel('bash', props.block).summary).toBe(`${'a'.repeat(4096)}…`)
+    args.append(' and even more')
+    expect(props.block.args.refresh()).toBe(false)
+    expect(toolRowModel('bash', props.block).summary).toBe(`${'a'.repeat(4096)}…`)
+  })
+
+  it.each([
+    ['write', FileMutationRow],
+    ['bash', BashRow],
+    ['custom_tool', GenericToolCard],
+  ] as const)('renders a cancelled %s preparation with the cancelled cue and no expansion', (name, Component) => {
+    const args = new PartialArguments()
+    args.append(name === 'write' ? '{"file_path":"hello"' : '{"description":"List files')
+    const props = preparation(name, args)
+    const block = { ...props.block, cancelled: true as const }
+    expect(toolRowModel(name, block).state).toBe('cancelled')
+    const view = render(<Component {...props} block={block} useSessions={vi.fn()} />)
+    expect(view.container.querySelector('[data-state="cancelled"]')).not.toBeNull()
+    // The visible cue and the accessible status label carry the state.
+    expect(view.getAllByText('Cancelled')).toHaveLength(2)
+    expect(view.queryByRole('button')).toBeNull()
+    expect(view.container.querySelector('[aria-expanded="true"]')).toBeNull()
+    expect(view.container.textContent).toContain(name === 'write' ? 'hello' : 'List files')
+  })
 })

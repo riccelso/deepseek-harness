@@ -154,6 +154,18 @@ describe('ClientAssistantStream', () => {
     expect(stream.acceptFrame(start(LlmAttemptId('session:2'), 4))).toBeUndefined()
   })
 
+  it('keeps a completed message retained through a later Turn start and retires it at its Step end', () => {
+    const stream = opened()
+    const durable = messageEvent(2)
+    stream.acceptDurable(durable)
+    expect(stream.acceptFrame(end(0, { kind: 'committed', eventType: 'assistant/message', seq: 2 })))
+      .toEqual({ type: 'publish', entry: durable })
+    const next = entry({ type: 'turn/start', seq: SessionSeq(3), time: 3, data: { turn: 2 } })
+    expect(stream.acceptDurable(next)).toEqual({ type: 'publish', entry: next })
+    const closed = entry({ type: 'step/end', seq: SessionSeq(4), time: 4, data: { turn: 1, step: 1 } })
+    expect(stream.acceptDurable(closed)).toEqual({ type: 'publish', entry: closed, retireAttemptId: ATTEMPT })
+  })
+
   it('clears retained chunks on replacement and refuses a new attempt before Step completion', () => {
     const stream = opened()
     const durable = messageEvent(2)
@@ -166,18 +178,45 @@ describe('ClientAssistantStream', () => {
     expect(stream.acceptFrame(start(LlmAttemptId('session:2'), 3))).toBeUndefined()
   })
 
-  it('retires failed attempts and interrupted messages at stream end', () => {
+  it('retires failed attempts at stream end', () => {
+    const stream = opened()
+    const durable = attemptEvent(2)
+    stream.acceptDurable(durable)
+    expect(stream.acceptFrame(end(0, {
+      kind: 'committed', eventType: 'assistant/attempt', seq: 2,
+    }))).toEqual({ type: 'settlement', attemptId: ATTEMPT, entry: durable })
+    expect(stream.acceptFrame(start(LlmAttemptId('session:2'), 2))).toBeUndefined()
+  })
+
+  it('retains an interrupted message through its Step and Turn ends and retires it at the next Turn start', () => {
+    const stream = opened()
     const message = messageEvent(2)
     if (message.event.type !== 'assistant/message') throw new Error('expected assistant message')
     const interrupted = entry({ ...message.event, data: { ...message.event.data, interrupted: true as const } })
-    for (const durable of [attemptEvent(2), interrupted]) {
-      const stream = opened()
-      stream.acceptDurable(durable)
-      expect(stream.acceptFrame(end(0, {
-        kind: 'committed', eventType: durable.event.type as 'assistant/message' | 'assistant/attempt', seq: 2,
-      }))).toEqual({ type: 'settlement', attemptId: ATTEMPT, entry: durable })
-      expect(stream.acceptFrame(start(LlmAttemptId('session:2'), 2))).toBeUndefined()
+    expect(stream.acceptDurable(interrupted)).toBeUndefined()
+    expect(stream.acceptFrame(chunkFrame(0))).toEqual(expect.objectContaining({ type: 'transient' }))
+    expect(stream.acceptFrame(end(1, {
+      kind: 'committed', eventType: 'assistant/message', seq: 2,
+    }))).toEqual({ type: 'publish', entry: interrupted })
+    for (const settled of [
+      entry({ type: 'step/end', seq: SessionSeq(3), time: 3, data: { turn: 1, step: 1 } }),
+      entry({ type: 'turn/end', seq: SessionSeq(4), time: 4, data: { turn: 1, reason: { kind: 'interrupted' } } }),
+    ]) {
+      expect(stream.acceptDurable(settled)).toEqual({ type: 'publish', entry: settled })
     }
+    const next = entry({ type: 'turn/start', seq: SessionSeq(5), time: 5, data: { turn: 2 } })
+    expect(stream.acceptDurable(next)).toEqual({ type: 'publish', entry: next, retireAttemptId: ATTEMPT })
+    expect(stream.acceptFrame(start(LlmAttemptId('session:2'), 5))).toBeUndefined()
+  })
+
+  it('retains an abandoned attempt until the next Turn starts', () => {
+    const stream = opened()
+    expect(stream.acceptFrame(chunkFrame(0))).toEqual(expect.objectContaining({ type: 'transient' }))
+    expect(stream.acceptFrame(end(1, { kind: 'abandoned' }))).toBeUndefined()
+    const closed = entry({ type: 'step/end', seq: SessionSeq(3), time: 3, data: { turn: 1, step: 1 } })
+    expect(stream.acceptDurable(closed)).toEqual({ type: 'publish', entry: closed })
+    const next = entry({ type: 'turn/start', seq: SessionSeq(4), time: 4, data: { turn: 2 } })
+    expect(stream.acceptDurable(next)).toEqual({ type: 'publish', entry: next, retireAttemptId: ATTEMPT })
   })
 
   it('rebaselines duplicate durable settlements or starts', () => {
@@ -212,12 +251,9 @@ describe('ClientAssistantStream', () => {
     expect(endMismatch.acceptFrame(end(1, { kind: 'abandoned' }))).toEqual({ type: 'rebaseline' })
   })
 
-  it('settles abandonment only when no durable settlement remains pending', () => {
+  it('retains an abandoned attempt only when no durable settlement remains pending', () => {
     const empty = opened()
-    expect(empty.acceptFrame(end(0, { kind: 'abandoned' }))).toEqual({
-      type: 'abandonment',
-      attemptId: String(ATTEMPT),
-    })
+    expect(empty.acceptFrame(end(0, { kind: 'abandoned' }))).toBeUndefined()
 
     const pending = opened()
     expect(pending.acceptDurable(attemptEvent(2))).toBeUndefined()

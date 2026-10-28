@@ -20,6 +20,7 @@ import {
 import { formatToolBody, toolRowModel, type ToolRowState } from '../models/tool-call-model.ts'
 import { CONVERSATION_NS as NS } from '../../locale.ts'
 import { ExitCodeBadge } from '../components/ExitCodeBadge.tsx'
+import { CancelledBadge } from '../components/CancelledBadge.tsx'
 import css from './bash-sample.module.css'
 
 type BashRowProps = ToolCallViewProps & PropsLocale<'conversation'>
@@ -31,6 +32,7 @@ function stateStatus(state: ToolRowState, t: BashRowProps['t']): string | null {
   switch (state) {
     case 'preparing': return t('row.preparing')
     case 'running': return t('bash.running')
+    case 'cancelled': return t('row.cancelled')
     case 'error': return t('bash.failed')
     case 'stopped': return t('bash.stopped')
     default: return null
@@ -39,7 +41,9 @@ function stateStatus(state: ToolRowState, t: BashRowProps['t']): string | null {
 
 /**
  * Render expandable Bash output with an accessible lifecycle label. While the
- * call is preparing the row shows the description streamed so far and cannot expand.
+ * call is preparing the row shows the description streamed so far and cannot
+ * expand; a cancelled preparation keeps that description beside the cancelled
+ * cue.
  * @param props - tool call, Session sources, locale, and inspection callback.
  * @returns the Bash output row.
  */
@@ -119,6 +123,7 @@ export const BashRow = memo(function BashRow({ toolName, block, sessionId, useSe
             <TextShimmer>{settlementLine ?? normalSummary}</TextShimmer>
           </span>
           {exitLabel !== null && <ExitCodeBadge label={exitLabel} />}
+          {state === 'cancelled' && <CancelledBadge label={t('row.cancelled')} />}
         </TextShimmer>
       </div>
       {open && (

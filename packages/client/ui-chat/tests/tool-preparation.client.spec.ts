@@ -245,6 +245,27 @@ describe('Tool preparation and durable replay', () => {
     }
   })
 
+  it('opens the preparing card on the first named delta within its animation frame', () => {
+    const h = harness()
+    expect(h.phases()).toEqual([])
+    expect(h.assembler.append(delta(2.1))).toBe('animation-frame')
+    const [node] = h.tools()
+    expect(node).toMatchObject({ data: { root: { phase: 'preparing', name: 'write' } } })
+  })
+
+  it('keeps the conversation rendering through malformed partial argument JSON', () => {
+    const h = harness()
+    h.assembler.append(delta(2.1, first, '{"command":"echo hello'))
+    h.assembler.append(delta(2.2, first, '" "oops"}', null))
+    const [node] = h.tools()
+    expect(node).toBeDefined()
+    expect(node!.data.root.args.invalid).toBe(true)
+    // The readable prefix before the malformed tail stays extractable.
+    expect(node!.data.root.args.textPrefix('command', 512)).toBe('echo hello')
+    expect(() => h.assembler.append(delta(2.3, first, 'zzz', null))).not.toThrow()
+    expect(h.phases()).toEqual([[first, 'preparing']])
+  })
+
   it('creates two independent live preparations and updates each call under the same key', () => {
     const h = harness()
     h.assembler.append(delta(2.1, first, '', null))
@@ -315,7 +336,7 @@ describe('Tool preparation and durable replay', () => {
     expect(groups.entries).toEqual(order)
   })
 
-  it('hides undispatched preparations when a settled Step ends before every call starts', () => {
+  it('marks an undispatched preparation cancelled when a settled Step ends before every call starts', () => {
     const h = harness()
     h.assembler.append(delta(2.1))
     h.assembler.append(delta(2.2, second))
@@ -326,9 +347,31 @@ describe('Tool preparation and durable replay', () => {
     expect(h.phases()).toEqual([[first, 'result'], [second, 'preparing']])
     const closed = entry({ type: 'step/end', seq: SessionSeq(8), time: 8, data: { turn: 1, step: 1 } })
     h.assembler.append(closed)
-    expect(h.phases()).toEqual([[first, 'result']])
+    const undispatched = h.tools().find(node => node.data.root.callId === second)?.data.root
+    expect(undispatched).toBeDefined()
+    expect(undispatched).toMatchObject({ phase: 'preparing', cancelled: true })
     h.assembler.settleAssistant(attemptId)
+    expect(h.phases()).toEqual([[first, 'result']])
     expect(h.material()).toEqual(harness([...opening, message, call(6), result(7), closed]).material())
+  })
+
+  it('resolves an interrupted preparation to cancelled through the Turn end and retires it with its rows', () => {
+    const h = harness()
+    h.assembler.append(delta(2.1, first, '{"file_path":"hello.txt","content":"he'))
+    h.assembler.append(delta(2.2, second, '{"command":"echo'))
+    expect(h.phases()).toEqual([[first, 'preparing'], [second, 'preparing']])
+    h.assembler.append(entry({ type: 'step/end', seq: SessionSeq(4), time: 4, data: { turn: 1, step: 1 } }))
+    const cancelledCards = () => h.tools()
+      .map((node) => {
+        const root = node.data.root
+        return [root.callId,
+          !('kind' in root) && root.phase === 'preparing' && root.cancelled === true] as const
+      })
+    expect(cancelledCards()).toEqual([[first, true], [second, true]])
+    h.assembler.append(entry({ type: 'turn/end', seq: SessionSeq(5), time: 5, data: { turn: 1, reason: { kind: 'interrupted' } } }))
+    expect(cancelledCards()).toEqual([[first, true], [second, true]])
+    h.assembler.settleAssistant(attemptId)
+    expect(h.phases()).toEqual([])
   })
 
   it('does not create preparing rows from stored Assistant streams in history or older pages', () => {

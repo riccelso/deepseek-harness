@@ -29,7 +29,7 @@ kind: "package-reference"
 
 已结束的前台命令若返回非零退出码、终止信号，或明确记录为无退出码，描述保持普通灰色，后面紧接带红点的中性胶囊。胶囊仅显示记录的退出码、信号或本地化的“未正常退出”状态，并保持在同一行；描述超出可用宽度时显示省略号，为胶囊预留空间。运行中、成功和后台调用不显示胶囊。通用执行错误与停止摘要仍保留错误色和警告色，悬停时也不改变。
 
-派发前，模型已给出名称的调用显示为不可展开的一行，使用工具自己的图标与标题。通用行显示为 `工具调用 · <工具名>`。read/write/edit 在 `file_path` 闭合且解码无误后显示可打开的路径；write/edit 从内容到达起在该路径后显示 `NKB`，执行中和成功后仍保留，位于差异统计之前。N 按解码后输入的 UTF-16 长度除以 1024 向上取整，edit 合计新旧文本长度；它不是文件字节数。失败和停止的行省略大小与差异统计。命令行显示流入中的描述。`tool/call` 才启用既有调用展示；参数块结束本身不代表开始执行。
+派发前，模型已给出名称的调用显示为不可展开的一行，使用工具自己的图标与标题。通用行显示为 `工具调用 · <工具名>`。read/write/edit 在 `file_path` 闭合且解码无误后显示可打开的路径；write/edit 从内容到达起在该路径后显示 `NKB`，执行中和成功后仍保留，位于差异统计之前。N 按解码后输入的 UTF-16 长度除以 1024 向上取整，edit 合计新旧文本长度；它不是文件字节数。失败、停止和取消的行省略大小与差异统计。命令行显示流入中的描述。`tool/call` 才启用既有调用展示；参数块结束本身不代表开始执行。
 
 ### 注册业务工具视图
 
@@ -49,7 +49,7 @@ owner 载荷为 `ToolCallOwnerProps`：`callId`、`toolName`、`phase` 判别字
 
 每个注册视图都接收[工具 slot 类型](src/client/contract/slots.ts)声明的显式 `preparing`、`start` 和 `result` props。所有块都提供 `name` 和懒计算的 `args` 读器，原有 `argsRaw` 和 result 的 `call` 字段仍可使用。行模型统一选择标题，并组合通用工具名前缀与已有参数摘要，不按生命周期阶段改变前缀；专用标题不附带英文名。write/edit 和 Bash 在各阶段共用组件。自定义 renderer 可保留独立准备态分支；依赖参数的组件接收 `StartedToolCallViewProps`。
 
-文件工具行优先使用完整的 `file_path`；其他通用行（包括搜索和未注册的工具）优先使用非空 `description`，再回退到各自类别的参数摘要。应在渲染或构造视图时读取 `args`：准备态读器原地增长，后续仅在已观察答案变化时重新发布块。
+文件工具行优先使用完整的 `file_path`；其他通用行（包括搜索和未注册的工具）优先使用非空 `description`，再回退到各自类别的参数摘要。两种摘要读取都在 4 KiB 处封顶，字段越过上限时追加截断标记，因此任意大小的流入输入只渲染一行有界文本，且到达上限后不再请求重新发布。应在渲染或构造视图时读取 `args`：准备态读器原地增长，后续仅在已观察答案变化时重新发布块。输入流在派发前结束的准备态渲染同一行，附带本地化的取消提示并停止运行扫光；其摘要在该 attempt 的瞬态 row 退出前保持可见。
 
 本包拥有 generic fallback，以及 shell/pwsh、read、read_image、write/edit、运行中的 `str_replace_editor` `create`／`str_replace`、grep/glob、web、todo、question 与 PTC dispatch 的内置展示。结构化卡片直接从第一方原始 event 字段派生；Host `presentCall` 与 `presentResult` 值不会进入 Client。运行中的原子工具行以同一道高光从左到右扫过标题、分隔符、摘要与后缀；已完成行保持静态。运行中与已完成的前台标准 `bash`/`pwsh` 和 `terminal_send` 调用，无论位于根还是 PTC dispatch 子调用中，都在通过相同的参数、结果和错误检查后使用 terminal 卡片。持久 `bash`/`pwsh` 调用仅在运行中使用 terminal 卡片。以已识别的 spill 策略提示结尾的 shell 输出，在 shell 行中使用可展开的 generic 输出，在 Details 中使用 generic 输出；位置被改变或被省略的退出标记无法证明成功。已完成的持久 shell 结果保持 generic 展示，因为 reset 与部分输出诊断不一定描述单个进程的退出状态；根调用的持久 shell 结果可展开。合法的主动后台 `bash`／`pwsh` 调用使用 terminal Start 展示；成功启动回执后，静态仅命令卡片保留 command 和 cwd，不显示输出或执行状态。启动失败保留通用参数与错误展示，后台 `terminal_send` 仍为 generic。Inspect 保留原始参数及回执，后续 job 输出不接回此卡片（[决定](../../../.agents/notes/implemented/bug-fix/2026-10-10-background-shell-command-display.zh.md)）。展开的终端命令与后台输入按可用宽度自动折行，保留原有换行和可选文本；终端输出保持按列对齐的排版。仅横向溢出时添加具名的键盘聚焦目标。提供 Inspect 时也可使用。回执不表示后台任务的退出状态。带有 `AUTO_REVIEW_DENIED` 的原生或 PTC dispatch 失败会在折叠行显示 Auto review 裁决，展开时显示一行归一化后的“未执行”原因；原因缺失或只有空白时使用本地化 fallback 文案。`ui-skill` 展示了业务包自行拥有的 `skill` 注册项。
 

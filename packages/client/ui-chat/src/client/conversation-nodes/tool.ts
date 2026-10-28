@@ -90,11 +90,16 @@ function applyDelta(state: ToolState, match: ConversationMatch): ToolState {
   return state
 }
 
-function preparingBlock(root: PreparingToolCall, current: ToolCallBlock | undefined): PreparingToolCall {
+function preparingBlock(
+  root: PreparingToolCall,
+  current: ToolCallBlock | undefined,
+  cancelled: boolean,
+): PreparingToolCall {
   const changed = root.args.refresh()
-  if (!changed && current !== undefined && !('kind' in current)
-    && current.phase === 'preparing' && current.name === root.name && current.args === root.args) return current
-  return changed ? { ...root } : root
+  if (!changed && current !== undefined && !('kind' in current) && current.phase === 'preparing'
+    && current.name === root.name && current.args === root.args
+    && (current.cancelled === true) === cancelled) return current
+  return changed || cancelled ? { ...root, ...cancelled ? { cancelled: true } : {} } : root
 }
 
 function rootResult(match: ConversationMatch, previous?: StartedToolCall): ToolResultNode | undefined {
@@ -337,18 +342,16 @@ export const toolDefinition: ConversationNodeDefinition<ToolState> = {
     }
     const interruptedAt = interruption(context)
     const root = !('kind' in state.root) && state.root.phase === 'preparing'
-      ? preparingBlock(state.root, current?.data.root)
+      ? preparingBlock(state.root, current?.data.root, interruptedAt !== undefined)
       : state.root
     const projected = projectBlock(root, state, interruptedAt)
     const anchor = context.start?.event.seq
       ?? ('kind' in state.root ? state.root.seq : context.matches[0]?.event.seq ?? 0)
-    const preparing = !('kind' in projected) && projected.phase === 'preparing'
-    const visibility = preparing && interruptedAt !== undefined ? 'hidden' : 'visible'
     const location = contextLocation(context)
     const data = current?.data.root === projected ? current.data : { root: projected } satisfies ToolChatData
     if (current?.data === data && current.anchorSeq === anchor
-      && current.visibility === visibility && current.location === location) return current
-    return chatNode(context, 'tool-call', anchor, data, { visibility, location })
+      && current.visibility === 'visible' && current.location === location) return current
+    return chatNode(context, 'tool-call', anchor, data, { visibility: 'visible', location })
   },
 }
 
