@@ -52,6 +52,13 @@ function sessionFakeFor() {
   } satisfies SessionBehaviorOverrides
 }
 
+/** Typed view of the shortcut commands ui-chat registers, read back through the bench stub. */
+interface ShortcutEntryStub {
+  readonly id: string
+  label(): string
+  resolve(context: unknown): { status: string; run?(): void }
+}
+
 async function bench(initialSettings?: ChatSettings, withBrowserRegistry = true, withProcessGroups = true) {
   const runtime = await SlotTestRuntime.create()
   const chatSettings = stubConfigForm<ChatSettings>()
@@ -64,6 +71,8 @@ async function bench(initialSettings?: ChatSettings, withBrowserRegistry = true,
   runtime.ctx.provide('connection', { state: createSnapshotStore('connected') } as never)
   runtime.ctx.provide('fileDrag', { actions: fileDrag, read: () => undefined })
   runtime.ctx.provide('layout', layout as never)
+  const shortcutsRegister = vi.fn((_entry: ShortcutEntryStub) => () => {})
+  runtime.ctx.provide('shortcuts', { register: shortcutsRegister } as never)
   const sidebarRight = {
     openResource: vi.fn<(address: string) => void>(),
     openTab: vi.fn<(kind: string, options?: unknown) => void>(),
@@ -133,7 +142,7 @@ async function bench(initialSettings?: ChatSettings, withBrowserRegistry = true,
       const preference: object = row.inject!()
       return preference as LinkOpeningRowInjected
     },
-    runtime, chat, chatSettings, browserAvailable,
+    runtime, chat, chatSettings, browserAvailable, shortcutsRegister,
     layout, openWorkspacePath, sidebarRight, sidebarRightTabs, session, chatViewApi, chatFlowApi, rootReference, openSession,
   }
 }
@@ -534,6 +543,29 @@ describe('Chat inject API', () => {
     expect(b.session.readAttachment).toHaveBeenCalledWith(ATTACHMENT.attachmentId)
     expect(injected.loadImage.peek?.(ATTACHMENT)).toBe(loaded)
     await b.runtime.dispose()
+  })
+
+  it('opens the conversation find bar through its shortcut and persists per Session', async () => {
+    const b = await bench()
+    try {
+      const entry = b.shortcutsRegister.mock.calls.at(-1)![0]
+      expect(entry.id).toBe('chat.find.open')
+      expect(typeof entry.label()).toBe('string')
+      const injected = b.chatViewApi(b.rootReference).injected
+      expect(injected.hooks.chatFind.getSnapshot()).toBe(false)
+      const resolution = entry.resolve(null)
+      expect(resolution.status).toBe('handled')
+      resolution.run?.()
+      expect(injected.hooks.chatFind.getSnapshot()).toBe(true)
+      expect(injected.readChatFind(ROOT)).toBeUndefined()
+      const saved = { term: 'token', caseSensitive: false, regex: false, index: 1 }
+      injected.saveChatFind(ROOT, saved)
+      expect(injected.readChatFind(ROOT)).toEqual(saved)
+      injected.closeChatFind()
+      expect(injected.hooks.chatFind.getSnapshot()).toBe(false)
+    } finally {
+      await b.runtime.dispose()
+    }
   })
 })
 

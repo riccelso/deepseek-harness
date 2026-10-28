@@ -23,9 +23,10 @@ import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client'
+import type { ShortcutCommandId } from '@deepseek-ai/dsh-client-shortcuts/client'
 import type {
   ChatFlowDataInjected, ChatFlowInjected, ChatNodeInjected, ChatScrollPosition, ChatViewInjected,
-  QuotaNoticeInjected, QuotaNoticeState, TurnTailOwnerProps,
+  QuotaNoticeInjected, QuotaNoticeState, SavedChatFind, TurnTailOwnerProps,
 } from './contract/slots.ts'
 import type { ChatSnapshot } from './contract/snapshot.ts'
 import { EMPTY_CHAT_SNAPSHOT } from './contract/snapshot.ts'
@@ -170,6 +171,26 @@ export function apply(ctx: Context): void {
   const presentation = derivePresentationPolicy(transcriptView.mode, transcriptView.collapseTiming, transcriptView.foldedReplies)
   const performancePolicy = new PerformanceUsagePolicy(chatSettings)
   ctx.effect(() => () => { transcriptView.dispose(); performancePolicy.dispose() })
+  // Conversation find: one open flag for the visible view, one saved term and
+  // options per Session, restored whenever its bar reopens.
+  const chatFindOpen = createSnapshotStore(false)
+  const savedChatFind = new Map<SessionId, SavedChatFind>()
+  ctx.inject(['shortcuts'], scope => scope.effect(() => scope.shortcuts.register({
+    id: 'chat.find.open' as ShortcutCommandId,
+    label: () => t('find.shortcut'),
+    aliases: ['find', 'find in conversation'],
+    // Web keeps primary+F for the browser's own page find, matching the
+    // Settings binding policy of leaving unmodified primary chords alone.
+    defaults: {
+      'desktop:macos': { code: 'KeyF', modifiers: ['primary'] },
+      'desktop:windows': { code: 'KeyF', modifiers: ['primary'] },
+      'desktop:linux': { code: 'KeyF', modifiers: ['primary'] },
+      'web:macos': { code: 'KeyF', modifiers: ['primary', 'alt'] },
+      'web:windows': { code: 'KeyF', modifiers: ['primary', 'alt'] },
+    },
+    regions: ['page'], modals: [],
+    resolve: () => ({ status: 'handled', run: () => { chatFindOpen.set(true) } }),
+  }), 'ui-chat: conversation find shortcut'))
   const performanceUsage = performancePolicy.mode
   registerChatNodeRenderers(ctx, performanceUsage, presentation)
   ctx.slots.registerFactory({
@@ -251,7 +272,15 @@ export function apply(ctx: Context): void {
         return {
           ...nodeSources(binding),
           fileDrag: ctx.fileDrag.actions,
-          hooks: { presentation, interactionIds: ctx.uiConversation.interactions },
+          hooks: {
+            presentation,
+            interactionIds: ctx.uiConversation.interactions,
+            chatFind: chatFindOpen,
+          },
+          openChatFind: () => { chatFindOpen.set(true) },
+          closeChatFind: () => { chatFindOpen.set(false) },
+          readChatFind: id => savedChatFind.get(id),
+          saveChatFind: (id, state) => { savedChatFind.set(id, state) },
           dispatchInteraction: gesture => ctx.uiConversation.interactions.dispatch(sessionId, gesture),
           fileMentions: (owner: TurnTailOwnerProps) => ctx.get('chatFileMentions')?.forClosing(owner, sessionId),
           // Files open in the right Sidebar, not in a desktop application: the

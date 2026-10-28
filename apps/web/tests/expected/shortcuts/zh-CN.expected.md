@@ -54,6 +54,9 @@
       - listitem:
         - button "修改关闭当前页面／窗口快捷键"
         - text: 关闭当前页面／窗口 ⌥ ⌘ W
+      - listitem:
+        - button "修改在对话中查找快捷键"
+        - text: 在对话中查找 ⌥ ⌘ F
   - region "消息输入":
     - heading "消息输入" [level=3]
     - list:

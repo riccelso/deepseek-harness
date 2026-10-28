@@ -296,6 +296,14 @@ export interface PerformanceUsageInjected {
   }
 }
 
+/** Term and options restored when the find bar reopens for one Session. */
+export interface SavedChatFind {
+  readonly term: string
+  readonly caseSensitive: boolean
+  readonly regex: boolean
+  readonly index: number
+}
+
 /** Business callbacks injected into the Chat view. */
 export interface ChatViewInjected {
   /** File preparation and failure callbacks owned by the file-drag plugin. */
@@ -307,7 +315,25 @@ export interface ChatViewInjected {
     interactionIds: ObservableSnapshot<readonly string[]>
     /** Live presentation policy derived from the accepted work-details mode. */
     presentation: ObservableSnapshot<ChatPresentationPolicy>
+    /** Whether the conversation find bar is open. */
+    chatFind: ObservableSnapshot<boolean>
   }
+  /** Open the conversation find bar for the visible Chat view. */
+  openChatFind(): void
+  /** Close the conversation find bar; highlights clear with it. */
+  closeChatFind(): void
+  /**
+   * Read one Session's persisted find state.
+   * @param sessionId - viewed Session.
+   * @returns its last term, options, and position, when saved.
+   */
+  readChatFind(sessionId: SessionId): SavedChatFind | undefined
+  /**
+   * Persist one Session's find state for the next open.
+   * @param sessionId - viewed Session.
+   * @param state - term, options, and current position.
+   */
+  saveChatFind(sessionId: SessionId, state: SavedChatFind): void
   keyedHooks: {
     /** Resolve the stable source for one Chat Node key. */
     chatNode: (key: string) => ChatNodeSource
